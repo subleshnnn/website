@@ -1,11 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
-interface ImageData {
-  url: string
-  caption: string
-}
 
 interface ImageUploadProps {
   images: string[]
@@ -319,11 +316,13 @@ export default function ImageUpload({ images, onImagesChange, thumbnails = [], o
           {images.map((image, index) => (
             <div key={index} className="space-y-2">
               <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group">
-                <img
+                <Image
                   src={image}
                   alt={`Upload ${index + 1}`}
+                  width={300}
+                  height={300}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
+                  onError={() => {
                     console.error('❌ Image failed to load for index:', index);
                     console.error('Image source starts with:', image.substring(0, 100));
                     console.error('Full image length:', image.length);

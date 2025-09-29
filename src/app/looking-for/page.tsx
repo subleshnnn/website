@@ -1,5 +1,14 @@
 import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
+
+interface ListingWithImages extends Listing {
+  listing_images: Array<{
+    id: string
+    image_url: string
+    thumbnail_url?: string
+    is_primary: boolean
+  }>
+}
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -12,7 +21,7 @@ function formatDate(dateString: string) {
   })
 }
 
-async function getLookingForListings(): Promise<any[]> {
+async function getLookingForListings(): Promise<ListingWithImages[]> {
   try {
     const { data, error } = await supabase
       .from('listings')
@@ -65,7 +74,7 @@ export default async function LookingForPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-24">
             {listings.map((listing) => {
-              const primaryImage = listing.listing_images?.find((img: any) => img.is_primary) || listing.listing_images?.[0]
+              const primaryImage = listing.listing_images?.find(img => img.is_primary) || listing.listing_images?.[0]
               return (
                 <Link
                   key={listing.id}
@@ -89,10 +98,10 @@ export default async function LookingForPage() {
                   </div>
                   <div className="text-lg text-black mb-4">
                     ${(listing.price / 100).toFixed(0)}
-                    {(listing.dog_friendly || listing.cat_friendly) && (
+                    {((listing as any).dog_friendly || (listing as any).cat_friendly) && (
                       <span className="text-amber-700 ml-2">
-                        {listing.dog_friendly && '🐕 friendly '}
-                        {listing.cat_friendly && '🐱 friendly'}
+                        {(listing as any).dog_friendly && '🐕 friendly '}
+                        {(listing as any).cat_friendly && '🐱 friendly'}
                       </span>
                     )}
                   </div>

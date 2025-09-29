@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -38,13 +38,7 @@ export default function InboxPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchConversations()
-    }
-  }, [isLoaded, user])
-
-  async function fetchConversations() {
+  const fetchConversations = useCallback(async () => {
     if (!user) return
 
     try {
@@ -76,13 +70,19 @@ export default function InboxPage() {
         return
       }
 
-      setConversations(data || [])
+      setConversations((data as unknown as Conversation[]) || [])
     } catch (error) {
       console.error('Network error fetching conversations:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchConversations()
+    }
+  }, [isLoaded, user, fetchConversations])
 
   if (!isLoaded || loading) {
     return (
@@ -122,9 +122,6 @@ export default function InboxPage() {
           <div className="max-w-2xl mx-auto space-y-4">
             {conversations.map((conversation) => {
               const lastMessage = conversation.messages?.[conversation.messages.length - 1]
-              const otherPersonId = conversation.listing_owner_id === user.id
-                ? conversation.inquirer_id
-                : conversation.listing_owner_id
               const isOwner = conversation.listing_owner_id === user.id
 
               return (

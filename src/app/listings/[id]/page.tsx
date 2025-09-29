@@ -48,7 +48,15 @@ export default async function ListingPage({ params }: Props) {
   }
 
   // Sort images - primary first
-  const sortedImages = listing.listing_images?.sort((a: any, b: any) => {
+  interface ImageType {
+    id: string
+    is_primary: boolean
+    image_url: string
+    thumbnail_url?: string
+    caption?: string
+  }
+
+  const sortedImages = listing.listing_images?.sort((a: ImageType, b: ImageType) => {
     if (a.is_primary && !b.is_primary) return -1
     if (!a.is_primary && b.is_primary) return 1
     return 0
@@ -113,7 +121,7 @@ export default async function ListingPage({ params }: Props) {
             <div>
               <div className="px-4 sm:px-6 lg:px-8 text-center">
                 <div className="space-y-24">
-                  {sortedImages.map((image: any, index: number) => (
+                  {sortedImages.map((image: ImageType, index: number) => (
                     <div key={image.id} className="relative">
                       <Image
                         src={image.image_url}

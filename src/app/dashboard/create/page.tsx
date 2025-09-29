@@ -7,6 +7,11 @@ import Navigation from '@/components/Navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 
+interface NominatimResult {
+  display_name: string
+  [key: string]: unknown
+}
+
 const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
   loading: () => <div className="text-center py-4">Loading image upload...</div>
 })
@@ -46,7 +51,7 @@ export default function CreateListingPage() {
       )
       const data = await response.json()
 
-      const suggestions = data.map((item: any) => item.display_name).slice(0, 5)
+      const suggestions = (data as NominatimResult[]).map(item => item.display_name).slice(0, 5)
       setLocationSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
     } catch (error) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 import Link from 'next/link'
@@ -22,13 +22,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'subletting' | 'looking_for'>('subletting')
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchUserListings()
-    }
-  }, [isLoaded, user])
-
-  async function fetchUserListings() {
+  const fetchUserListings = useCallback(async () => {
     if (!user) return
 
     try {
@@ -61,13 +55,19 @@ export default function DashboardPage() {
         return
       }
 
-      setListings(data || [])
+      setListings((data as unknown as Listing[]) || [])
     } catch (error) {
       console.error('Network error fetching user listings:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchUserListings()
+    }
+  }, [isLoaded, user, fetchUserListings])
 
   async function deleteListing(id: string) {
     if (!confirm('Are you sure you want to delete this listing?')) return
@@ -127,7 +127,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {listings.filter(listing => (listing.listing_type || 'subletting') === activeTab).length === 0 ? (
+        {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).length === 0 ? (
           <div className="text-center">
             <Link
               href="/dashboard/create"
@@ -141,8 +141,17 @@ export default function DashboardPage() {
         ) : (
           <>
             <div className="space-y-24">
-              {listings.filter(listing => (listing.listing_type || 'subletting') === activeTab).map((listing) => {
-                const primaryImage = listing.listing_images?.find((img: any) => img.is_primary) || listing.listing_images?.[0]
+              {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).map((listing) => {
+                const listingWithExtras = listing as unknown as Listing & {
+                  listing_type?: string
+                  dog_friendly?: boolean
+                  cat_friendly?: boolean
+                  listing_images?: Array<{
+                    image_url: string
+                    is_primary: boolean
+                  }>
+                }
+                const primaryImage = listingWithExtras.listing_images?.find((img) => img.is_primary) || listingWithExtras.listing_images?.[0]
                 return (
                   <div key={listing.id} className="text-center">
                     <div className="text-lg text-black">
@@ -163,10 +172,10 @@ export default function DashboardPage() {
                     <div className="text-lg text-black mb-4">
                       ${(listing.price / 100).toFixed(0)}
                     </div>
-                    {(listing.dog_friendly || listing.cat_friendly) && (
+                    {(listingWithExtras.dog_friendly || listingWithExtras.cat_friendly) && (
                       <div className="text-lg text-amber-700 mb-4">
-                        {listing.dog_friendly && '🐕 friendly '}
-                        {listing.cat_friendly && '🐱 friendly'}
+                        {listingWithExtras.dog_friendly && '🐕 friendly '}
+                        {listingWithExtras.cat_friendly && '🐱 friendly'}
                       </div>
                     )}
                     {primaryImage ? (

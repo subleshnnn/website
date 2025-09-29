@@ -192,7 +192,7 @@ export default function AdminPage() {
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p>You don't have admin access to this page.</p>
+          <p>You don&apos;t have admin access to this page.</p>
         </div>
       </div>
     )
@@ -213,8 +213,8 @@ export default function AdminPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Send Invitation</h2>
           <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
             <p className="text-blue-800 text-sm">
-              <strong>Testing Mode:</strong> Currently, emails can only be sent to your email address (akhmetovtimur@gmail.com) due to Resend's free tier restrictions. 
-              To send to other emails, you'll need to verify a domain at resend.com/domains.
+              <strong>Testing Mode:</strong> Currently, emails can only be sent to your email address (akhmetovtimur@gmail.com) due to Resend&apos;s free tier restrictions. 
+              To send to other emails, you&apos;ll need to verify a domain at resend.com/domains.
             </p>
           </div>
           <div className="flex gap-4">

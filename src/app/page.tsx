@@ -1,7 +1,7 @@
 'use client'
 
 import Navigation from '@/components/Navigation'
-import { supabase, type Listing } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
@@ -15,7 +15,7 @@ function formatDate(dateString: string) {
   })
 }
 
-async function getListings(): Promise<any[]> {
+async function getListings(): Promise<ListingData[]> {
   try {
     // First fetch listings without images to avoid timeout
     const { data: listings, error: listingsError } = await supabase
@@ -110,7 +110,7 @@ function HomePageContent() {
       ) : (
         <div className="space-y-24">
           {listings.map((listing) => {
-            const primaryImage = listing.listing_images?.find((img: any) => img.is_primary) || listing.listing_images?.[0]
+            const primaryImage = listing.listing_images?.find(img => img.is_primary) || listing.listing_images?.[0]
             return (
               <Link
                 key={listing.id}

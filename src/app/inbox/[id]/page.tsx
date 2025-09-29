@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
@@ -47,13 +47,7 @@ export default function ConversationPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
 
-  useEffect(() => {
-    if (isLoaded && user && conversationId) {
-      fetchConversation()
-    }
-  }, [isLoaded, user, conversationId])
-
-  async function fetchConversation() {
+  const fetchConversation = useCallback(async () => {
     if (!user) return
 
     try {
@@ -95,14 +89,20 @@ export default function ConversationPage() {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       )
 
-      setConversation(data)
+      setConversation(data as unknown as ConversationData)
     } catch (error) {
       console.error('Network error fetching conversation:', error)
       router.push('/inbox')
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, conversationId, router])
+
+  useEffect(() => {
+    if (isLoaded && user && conversationId) {
+      fetchConversation()
+    }
+  }, [isLoaded, user, conversationId, fetchConversation])
 
   async function sendMessage() {
     if (!user || !conversation || !newMessage.trim()) return

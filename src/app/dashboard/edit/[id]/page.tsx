@@ -1,11 +1,19 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import dynamic from 'next/dynamic'
 import { supabase, type Listing } from '@/lib/supabase'
+
+interface ListingImage {
+  id: string
+  image_url: string
+  thumbnail_url?: string
+  caption: string | null
+  is_primary: boolean
+}
 
 const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
   loading: () => <div className="text-center py-4">Loading image upload...</div>
@@ -35,15 +43,7 @@ export default function EditListingPage() {
     cat_friendly: false
   })
 
-  useEffect(() => {
-    console.log('🔄 useEffect triggered with listingId:', listingId)
-    if (listingId) {
-      console.log('📥 Fetching listing...')
-      fetchListing()
-    }
-  }, [listingId])
-
-  async function fetchListing() {
+  const fetchListing = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('listings')
@@ -86,15 +86,15 @@ export default function EditListingPage() {
       setListing(data)
       
       // Sort images by primary first, then by creation order
-      const sortedImages = data.listing_images?.sort((a: any, b: any) => {
+      const sortedImages = (data.listing_images as ListingImage[])?.sort((a, b) => {
         if (a.is_primary && !b.is_primary) return -1
         if (!a.is_primary && b.is_primary) return 1
         return 0
       }) || []
-      
-      setImages(sortedImages.map((img: any) => img.image_url))
-      setThumbnails(sortedImages.map((img: any) => img.thumbnail_url || img.image_url))
-      setImageCaptions(sortedImages.map((img: any) => img.caption || ''))
+
+      setImages(sortedImages.map(img => img.image_url))
+      setThumbnails(sortedImages.map(img => img.thumbnail_url || img.image_url))
+      setImageCaptions(sortedImages.map(img => img.caption || ''))
       
       setFormData({
         listing_type: data.listing_type || 'subletting',
@@ -114,7 +114,15 @@ export default function EditListingPage() {
     } finally {
       setFetchLoading(false)
     }
-  }
+  }, [listingId, user, router])
+
+  useEffect(() => {
+    console.log('🔄 useEffect triggered with listingId:', listingId)
+    if (listingId) {
+      console.log('📥 Fetching listing...')
+      fetchListing()
+    }
+  }, [listingId, fetchListing])
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value, type } = e.target
