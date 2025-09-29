@@ -2,6 +2,8 @@ import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 
 interface ListingWithImages extends Listing {
+  dog_friendly?: boolean
+  cat_friendly?: boolean
   listing_images: Array<{
     id: string
     image_url: string
@@ -98,10 +100,10 @@ export default async function LookingForPage() {
                   </div>
                   <div className="text-lg text-black mb-4">
                     ${(listing.price / 100).toFixed(0)}
-                    {((listing as any).dog_friendly || (listing as any).cat_friendly) && (
+                    {(listing.dog_friendly || listing.cat_friendly) && (
                       <span className="text-amber-700 ml-2">
-                        {(listing as any).dog_friendly && '🐕 friendly '}
-                        {(listing as any).cat_friendly && '🐱 friendly'}
+                        {listing.dog_friendly && '🐕 friendly '}
+                        {listing.cat_friendly && '🐱 friendly'}
                       </span>
                     )}
                   </div>

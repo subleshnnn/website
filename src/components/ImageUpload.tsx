@@ -17,7 +17,7 @@ interface ImageUploadProps {
 // Function to create both full-size and thumbnail
 const createImageVersions = (file: File): Promise<{ full: File, thumbnail: File }> => {
   return new Promise((resolve) => {
-    const img = new Image()
+    const img = new window.Image()
 
     img.onload = async () => {
       // Create full-size version (max 1200px, high quality)
@@ -65,8 +65,16 @@ const createImageVersions = (file: File): Promise<{ full: File, thumbnail: File 
       thumbCtx?.drawImage(img, 0, 0, thumbWidth, thumbHeight)
 
       // Convert to files using WebP format for better compression
-      const fullBlob = await new Promise<Blob>((res) => fullCanvas.toBlob(res!, 'image/webp', 0.9))
-      const thumbBlob = await new Promise<Blob>((res) => thumbCanvas.toBlob(res!, 'image/webp', 0.8))
+      const fullBlob = await new Promise<Blob>((resolve) => {
+        fullCanvas.toBlob((blob) => {
+          if (blob) resolve(blob)
+        }, 'image/webp', 0.9)
+      })
+      const thumbBlob = await new Promise<Blob>((resolve) => {
+        thumbCanvas.toBlob((blob) => {
+          if (blob) resolve(blob)
+        }, 'image/webp', 0.8)
+      })
 
       const fullFile = new File([fullBlob], file.name.replace(/\.[^/.]+$/, '.webp'), { type: 'image/webp', lastModified: Date.now() })
       const thumbFile = new File([thumbBlob], `thumb_${file.name}`.replace(/\.[^/.]+$/, '.webp'), { type: 'image/webp', lastModified: Date.now() })
