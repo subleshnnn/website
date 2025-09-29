@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation'
 import ContactButton from '@/components/ContactButton'
 import Image from 'next/image'
 
+// Force dynamic rendering since Navigation uses Clerk hooks
+export const dynamic = 'force-dynamic'
+
 function formatDate(dateString: string) {
   const date = new Date(dateString)
   return date.toLocaleDateString('en-GB', {

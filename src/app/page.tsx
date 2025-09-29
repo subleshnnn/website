@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering since Navigation uses Clerk hooks
+export const dynamic = 'force-dynamic'
+
 import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'

@@ -1,6 +1,9 @@
 import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 
+// Force dynamic rendering since Navigation uses Clerk hooks
+export const dynamic = 'force-dynamic'
+
 interface ListingWithImages extends Listing {
   dog_friendly?: boolean
   cat_friendly?: boolean
