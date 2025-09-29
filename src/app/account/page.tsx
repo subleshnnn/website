@@ -3,6 +3,9 @@
 import Navigation from '@/components/Navigation'
 import { UserProfile } from '@clerk/nextjs'
 
+// Force dynamic rendering for pages that use Clerk
+export const dynamic = 'force-dynamic'
+
 export default function AccountPage() {
   return (
     <div className="min-h-screen bg-white">

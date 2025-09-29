@@ -1,6 +1,9 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
+
+// Force dynamic rendering for pages that use Clerk
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'

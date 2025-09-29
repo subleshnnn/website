@@ -1,6 +1,9 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
+
+// Force dynamic rendering for pages that use Clerk
+export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'

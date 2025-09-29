@@ -1,10 +1,13 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
+
+// Force dynamic rendering for pages that use Clerk
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 
 interface NominatimResult {
@@ -12,7 +15,7 @@ interface NominatimResult {
   [key: string]: unknown
 }
 
-const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
+const ImageUpload = dynamicImport(() => import('@/components/ImageUpload'), {
   loading: () => <div className="text-center py-4">Loading image upload...</div>
 })
 
