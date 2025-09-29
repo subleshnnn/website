@@ -24,29 +24,39 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder-key-for-build'
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const isBuildTime = !publishableKey || publishableKey.includes('placeholder')
+
+  const content = (
+    <html lang="en">
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/Cerial.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin=""
+        />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
+      >
+        <QueryProvider>
+          {children}
+        </QueryProvider>
+      </body>
+    </html>
+  )
+
+  // During build or when no valid key, don't wrap with ClerkProvider
+  if (isBuildTime) {
+    return content
+  }
 
   return (
     <ClerkProvider publishableKey={publishableKey}>
-      <html lang="en">
-        <head>
-          <link
-            rel="preload"
-            href="/fonts/Cerial.ttf"
-            as="font"
-            type="font/ttf"
-            crossOrigin=""
-          />
-        </head>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          suppressHydrationWarning={true}
-        >
-          <QueryProvider>
-            {children}
-          </QueryProvider>
-        </body>
-      </html>
+      {content}
     </ClerkProvider>
   );
 }
