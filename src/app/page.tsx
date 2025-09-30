@@ -4,10 +4,14 @@
 export const dynamic = 'force-dynamic'
 
 import Navigation from '@/components/Navigation'
+import FilterBar from '@/components/FilterBar'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { FONT_SIZES, FONT_FAMILY } from '@/lib/constants'
+import { useUser } from '@clerk/nextjs'
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
@@ -78,6 +82,7 @@ interface ListingData {
   id: string
   location: string
   price: number
+  property_type?: string
   available_from?: string
   available_to?: string
   dog_friendly?: boolean
@@ -90,40 +95,55 @@ interface ListingData {
   }>
 }
 
-function HomePageContent() {
-  const { data: listings = [], isLoading } = useQuery({
+function HomePageContent({ filters }: { filters: { city: string, type: string, maxBudget: number } }) {
+
+  const { data: allListings = [], isLoading } = useQuery({
     queryKey: ['listings'],
     queryFn: getListings,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
+  // Filter listings based on current filters
+  const listings = allListings.filter((listing) => {
+    // City filter - check if the filter city appears anywhere in the location string (case-insensitive)
+    if (filters.city && filters.city !== 'All Cities') {
+      const locationLower = listing.location.toLowerCase()
+      const filterCityLower = filters.city.toLowerCase()
+
+      // Check if the location contains the filter city as a whole word
+      if (!locationLower.includes(filterCityLower)) return false
+    }
+
+    // Type filter (skip if property_type field doesn't exist yet)
+    if (filters.type && filters.type !== 'All Types') {
+      const propertyType = (listing as unknown as {property_type?: string}).property_type
+      if (propertyType && propertyType.toLowerCase() !== filters.type.toLowerCase()) return false
+    }
+
+    // Budget filter
+    if (listing.price > (filters.maxBudget * 100)) return false
+
+    return true
+  })
+
   return (
     <>
       {listings.length === 0 && !isLoading ? (
-        <div className="py-12">
-          <div className="mb-4">
-            <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <h3 className="text-lg text-gray-900 mb-2">No listings yet</h3>
-          <p className="text-gray-500 mb-4">Artist spaces will appear here once members start sharing.</p>
-          <p className="text-lg text-gray-400">This is an invite-only community for artists.</p>
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)', marginTop: '-10vh' }}>
+          <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
+            Seems there is no listings here...
+          </p>
         </div>
       ) : (
         <div className="space-y-24">
           {listings.map((listing) => {
             const primaryImage = listing.listing_images?.find(img => img.is_primary) || listing.listing_images?.[0]
             return (
-              <Link
-                key={listing.id}
-                href={`/listings/${listing.id}`}
-                className="block text-center"
-              >
-                <div className="text-lg text-black">
+              <div key={listing.id} className="text-center">
+                <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                   {listing.location}
                 </div>
-                <div className="text-lg text-black">
+                <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                   {(listing.available_from || listing.available_to) &&
                     (listing.available_from && listing.available_to
                       ? `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
@@ -135,8 +155,8 @@ function HomePageContent() {
                     )
                   }
                 </div>
-                <div className="text-lg text-black mb-4">
-                  ${(listing.price / 100).toFixed(0)}
+                <div className="text-black mb-4" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
+                  {(listing.price / 100).toFixed(0)} usd
                   {(listing.dog_friendly || listing.cat_friendly) && (
                     <span className="text-amber-700 ml-2">
                       {listing.dog_friendly && '🐕 friendly '}
@@ -144,29 +164,34 @@ function HomePageContent() {
                     </span>
                   )}
                 </div>
-                {primaryImage ? (
-                  <Image
-                    src={primaryImage.thumbnail_url || primaryImage.image_url}
-                    alt={`Listing in ${listing.location}`}
-                    width={400}
-                    height={400}
-                    className="h-auto w-full"
-                    style={{ maxHeight: '400px', objectFit: 'contain' }}
-                    loading="lazy"
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                    priority={false}
-                    quality={75}
-                    sizes="(max-width: 768px) 100vw, 400px"
-                  />
-                ) : (
-                  <div className="bg-gray-200 flex items-center justify-center" style={{ height: '300px' }}>
-                    <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
-              </Link>
+                <Link
+                  href={`/listings/${listing.id}`}
+                  className="inline-block"
+                >
+                  {primaryImage ? (
+                    <Image
+                      src={primaryImage.thumbnail_url || primaryImage.image_url}
+                      alt={`Listing in ${listing.location}`}
+                      width={400}
+                      height={400}
+                      className="h-auto"
+                      style={{ maxHeight: '400px', objectFit: 'contain' }}
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                      priority={false}
+                      quality={75}
+                      sizes="(max-width: 768px) 100vw, 400px"
+                    />
+                  ) : (
+                    <div className="bg-gray-200 flex items-center justify-center" style={{ height: '300px' }}>
+                      <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                </Link>
+              </div>
             )
           })}
         </div>
@@ -176,45 +201,94 @@ function HomePageContent() {
 }
 
 export default function HomePage() {
+  const { isSignedIn } = useUser()
+  const [filters, setFilters] = useState({
+    city: '',
+    type: '',
+    maxBudget: 5000
+  })
+  const [mounted, setMounted] = useState(false)
+
+  // Random color on each page load
+  const colors = [
+    'text-blue-400', 'text-green-400', 'text-red-400', 'text-purple-400',
+    'text-yellow-400', 'text-pink-400', 'text-indigo-400', 'text-orange-400',
+    'text-teal-400', 'text-blue-500', 'text-green-500', 'text-red-500',
+    'text-purple-500', 'text-yellow-500', 'text-pink-500', 'text-indigo-500',
+    'text-orange-500', 'text-teal-500'
+  ]
+  const [randomColor] = useState(() => colors[Math.floor(Math.random() * colors.length)])
+
+  // Animation colors for the link
+  const animationColors = ['#60a5fa', '#4ade80', '#f87171', '#c084fc', '#facc15', '#f472b6', '#818cf8', '#fb923c', '#2dd4bf']
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [animatedColor, setAnimatedColor] = useState('')
+  const [linkInterval, setLinkInterval] = useState<NodeJS.Timeout | null>(null)
+
+  const startAnimation = () => {
+    if (linkInterval) return
+    setIsAnimating(true)
+    const interval = setInterval(() => {
+      setAnimatedColor(animationColors[Math.floor(Math.random() * animationColors.length)])
+    }, 200)
+    setLinkInterval(interval)
+  }
+
+  const stopAnimation = () => {
+    if (linkInterval) {
+      clearInterval(linkInterval)
+      setLinkInterval(null)
+      setIsAnimating(false)
+      setAnimatedColor('')
+    }
+  }
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation onFiltersChange={setFilters} />
 
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-20">
         {/* Descriptive text block */}
         <div className="text-left mb-16">
-          <p className="text-4xl" style={{ fontFamily: 'Cerial, sans-serif' }}>
-            <span className="text-blue-400">Subleshnn</span>{' '}
-            <span className="text-green-400">is</span>{' '}
-            <span className="text-red-400">for</span>{' '}
-            <span className="text-purple-400">us</span>{' '}
-            <span className="text-yellow-400">traveling</span>{' '}
-            <span className="text-pink-400">people</span>{' '}
-            <span className="text-indigo-400">who</span>{' '}
-            <span className="text-orange-400">for</span>{' '}
-            <span className="text-teal-400">this</span>{' '}
-            <span className="text-gray-400">or</span>{' '}
-            <span className="text-blue-500">that</span>{' '}
-            <span className="text-green-500">reason</span>{' '}
-            <span className="text-red-500">need</span>{' '}
-            <span className="text-purple-500">a</span>{' '}
-            <span className="text-yellow-500">place</span>{' '}
-            <span className="text-pink-500">to</span>{' '}
-            <span className="text-indigo-500">stay.</span>{' '}
-            <span className="text-orange-500">Look</span>{' '}
-            <span className="text-teal-500">for</span>{' '}
-            <span className="text-gray-500">free,</span>{' '}
-            <span className="text-blue-300">post</span>{' '}
-            <span className="text-green-300">for</span>{' '}
-            <span className="text-red-300">a</span>{' '}
-            <span className="text-purple-300">dollar.</span>{' '}
-            <span className="text-yellow-300">Sign</span>{' '}
-            <span className="text-pink-300">up</span>{' '}
-            <span className="text-indigo-300">here</span>
-          </p>
+          {mounted && (
+            <p className={randomColor} style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
+              For us traveling people who for this or that reason need a place to stay. Look for free, post for a dollar.{' '}
+              {isSignedIn ? (
+                <Link
+                  href="/dashboard/create"
+                  style={{
+                    borderBottom: '1px solid currentColor',
+                    paddingBottom: '2px',
+                    ...(isAnimating && { color: animatedColor })
+                  }}
+                  onMouseEnter={startAnimation}
+                  onMouseLeave={stopAnimation}
+                >
+                  Add Your Sublet (+)
+                </Link>
+              ) : (
+                <Link
+                  href="/sign-up"
+                  style={{
+                    borderBottom: '1px solid currentColor',
+                    paddingBottom: '2px',
+                    ...(isAnimating && { color: animatedColor })
+                  }}
+                  onMouseEnter={startAnimation}
+                  onMouseLeave={stopAnimation}
+                >
+                  Sign up here
+                </Link>
+              )}
+            </p>
+          )}
         </div>
 
-        <HomePageContent />
+        <HomePageContent filters={filters} />
       </main>
     </div>
   )

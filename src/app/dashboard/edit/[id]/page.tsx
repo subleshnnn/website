@@ -36,6 +36,7 @@ export default function EditListingPage() {
   const [imageCaptions, setImageCaptions] = useState<string[]>([])
   const [formData, setFormData] = useState({
     listing_type: 'subletting',
+    property_type: '',
     description: '',
     price: '',
     location: '',
@@ -101,6 +102,7 @@ export default function EditListingPage() {
       
       setFormData({
         listing_type: data.listing_type || 'subletting',
+        property_type: (data as unknown as {property_type?: string}).property_type || '',
         description: data.description || '',
         price: (data.price / 100).toString(),
         location: data.location,
@@ -127,7 +129,7 @@ export default function EditListingPage() {
     }
   }, [listingId, fetchListing])
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value, type } = e.target
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
 
@@ -144,20 +146,27 @@ export default function EditListingPage() {
     setLoading(true)
 
     try {
+      const updateData: Record<string, unknown> = {
+        title: `${formData.location} - ${new Date().toLocaleDateString()}`,
+        listing_type: formData.listing_type,
+        description: formData.description,
+        price: Math.round(parseFloat(formData.price) * 100),
+        location: formData.location,
+        contact_email: formData.contact_email,
+        available_from: formData.available_from || null,
+        available_to: formData.available_to || null,
+        dog_friendly: formData.dog_friendly,
+        cat_friendly: formData.cat_friendly
+      }
+
+      // Only include property_type if it has a value (for future database compatibility)
+      if (formData.property_type) {
+        updateData.property_type = formData.property_type
+      }
+
       const { error } = await supabase
         .from('listings')
-        .update({
-          title: `${formData.location} - ${new Date().toLocaleDateString()}`,
-          listing_type: formData.listing_type,
-          description: formData.description,
-          price: Math.round(parseFloat(formData.price) * 100),
-          location: formData.location,
-          contact_email: formData.contact_email,
-          available_from: formData.available_from || null,
-          available_to: formData.available_to || null,
-          dog_friendly: formData.dog_friendly,
-          cat_friendly: formData.cat_friendly
-        })
+        .update(updateData)
         .eq('id', listingId)
 
       if (error) {
@@ -233,40 +242,84 @@ export default function EditListingPage() {
     <div className="min-h-screen bg-white">
       <Navigation />
 
+      <style jsx>{`
+        .tab-button::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background-color: transparent;
+        }
+        .tab-button.active::after {
+          background-color: black;
+        }
+        .tab-button:hover::after {
+          background-color: black;
+        }
+        .action-link::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background-color: transparent;
+        }
+        .action-link:hover::after {
+          background-color: currentColor;
+        }
+      `}</style>
+
       <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <div className="max-w-2xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
 
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <div className="relative bg-gray-200 rounded-full p-1 flex">
-                <div
-                  className="absolute top-1 bottom-1 bg-black rounded-full transition-all duration-300 ease-in-out"
-                  style={{
-                    width: 'calc(50% - 4px)',
-                    left: formData.listing_type === 'subletting' ? '4px' : 'calc(50% + 2px)'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, listing_type: 'subletting' }))}
-                  className={`relative z-10 px-6 py-2 text-lg rounded-full transition-colors duration-300 ${
-                    formData.listing_type === 'subletting' ? 'text-white' : 'text-black'
-                  }`}
-                >
-                  Subletting
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, listing_type: 'looking_for' }))}
-                  className={`relative z-10 px-6 py-2 text-lg rounded-full transition-colors duration-300 ${
-                    formData.listing_type === 'looking_for' ? 'text-white' : 'text-black'
-                  }`}
-                >
-                  Looking For
-                </button>
-              </div>
-            </div>
+          <div className="mb-16 flex justify-center gap-8">
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, listing_type: 'subletting' }))}
+              className={`text-black relative tab-button ${formData.listing_type === 'subletting' ? 'active' : ''}`}
+              style={{
+                fontFamily: 'Cerial, sans-serif',
+                fontSize: '24px'
+              }}
+            >
+              Sublets
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, listing_type: 'looking_for' }))}
+              className={`text-black relative tab-button ${formData.listing_type === 'looking_for' ? 'active' : ''}`}
+              style={{
+                fontFamily: 'Cerial, sans-serif',
+                fontSize: '24px'
+              }}
+            >
+              Requests
+            </button>
+          </div>
+
+          {/* Property Type Dropdown */}
+          <div>
+            <select
+              id="property_type"
+              name="property_type"
+              value={formData.property_type}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-black focus:outline-none text-black bg-white appearance-none"
+              style={{
+                fontFamily: 'Cerial, sans-serif',
+                fontSize: '24px',
+                backgroundImage: 'none'
+              }}
+            >
+              <option value="">Select Property Type</option>
+              <option value="room">Room</option>
+              <option value="studio">Studio</option>
+              <option value="apartment">Apartment</option>
+            </select>
           </div>
 
           <div>
@@ -277,10 +330,14 @@ export default function EditListingPage() {
               maxLength={280}
               value={formData.description}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500 placeholder-gray-400"
-              placeholder="Description - Describe your space, amenities, and any special features..."
+              className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
+              placeholder="Description"
+              style={{
+                fontFamily: 'Cerial, sans-serif',
+                fontSize: '24px'
+              }}
             />
-            <div className="text-sm text-gray-400 mt-1">
+            <div className="text-sm text-gray-400 mt-1" style={{ fontFamily: 'Cerial, sans-serif' }}>
               {formData.description.length}/280 characters
             </div>
           </div>
@@ -296,8 +353,12 @@ export default function EditListingPage() {
                 step="0.01"
                 value={formData.price}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500 placeholder-gray-400"
-                placeholder="Price ($) - e.g. 1200"
+                className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
+                placeholder="Price (usd)"
+                style={{
+                  fontFamily: 'Cerial, sans-serif',
+                  fontSize: '24px'
+                }}
               />
             </div>
 
@@ -309,8 +370,12 @@ export default function EditListingPage() {
                 required
                 value={formData.location}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500 placeholder-gray-400"
-                placeholder="Location - e.g. Brooklyn, NY"
+                className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
+                placeholder="Location"
+                style={{
+                  fontFamily: 'Cerial, sans-serif',
+                  fontSize: '24px'
+                }}
               />
             </div>
           </div>
@@ -323,8 +388,12 @@ export default function EditListingPage() {
               required
               value={formData.contact_email}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500 placeholder-gray-400"
-              placeholder="Contact Email - e.g. artist@example.com"
+              className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
+              placeholder="Contact Email"
+              style={{
+                fontFamily: 'Cerial, sans-serif',
+                fontSize: '24px'
+              }}
             />
           </div>
 
@@ -336,8 +405,12 @@ export default function EditListingPage() {
                 name="available_from"
                 value={formData.available_from}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500"
+                className="w-full px-3 py-2 border border-black focus:outline-none text-black"
                 title="Available From"
+                style={{
+                  fontFamily: 'Cerial, sans-serif',
+                  fontSize: '24px'
+                }}
               />
             </div>
 
@@ -348,8 +421,12 @@ export default function EditListingPage() {
                 name="available_to"
                 value={formData.available_to}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none text-gray-500"
+                className="w-full px-3 py-2 border border-black focus:outline-none text-black"
                 title="Available Until"
+                style={{
+                  fontFamily: 'Cerial, sans-serif',
+                  fontSize: '24px'
+                }}
               />
             </div>
           </div>
@@ -362,9 +439,9 @@ export default function EditListingPage() {
                 name="dog_friendly"
                 checked={formData.dog_friendly}
                 onChange={handleInputChange}
-                className="rounded border-gray-300 text-black focus:outline-none"
+                className="rounded border-black text-black focus:outline-none"
               />
-              <label htmlFor="dog_friendly" className="text-lg text-gray-500">
+              <label htmlFor="dog_friendly" className="text-black" style={{ fontFamily: 'Cerial, sans-serif', fontSize: '24px' }}>
                 🐕 Friendly
               </label>
             </div>
@@ -376,9 +453,9 @@ export default function EditListingPage() {
                 name="cat_friendly"
                 checked={formData.cat_friendly}
                 onChange={handleInputChange}
-                className="rounded border-gray-300 text-black focus:outline-none"
+                className="rounded border-black text-black focus:outline-none"
               />
-              <label htmlFor="cat_friendly" className="text-lg text-gray-500">
+              <label htmlFor="cat_friendly" className="text-black" style={{ fontFamily: 'Cerial, sans-serif', fontSize: '24px' }}>
                 🐱 Friendly
               </label>
             </div>
@@ -396,18 +473,20 @@ export default function EditListingPage() {
             />
           </div>
 
-          <div className="flex gap-4 pt-6">
+          <div className="flex justify-center gap-4 pt-6">
             <button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="flex-1 bg-white text-black border border-black py-3 px-6 hover:bg-gray-100 transition-colors"
+              className="text-red-600 relative action-link"
+              style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-black text-white py-3 px-6 hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="text-black relative action-link disabled:opacity-50"
+              style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
             >
               {loading ? 'Updating...' : 'Update Listing'}
             </button>

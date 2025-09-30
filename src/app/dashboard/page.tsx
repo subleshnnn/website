@@ -9,6 +9,7 @@ import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
+import { FONT_SIZES, FONT_FAMILY } from '@/lib/constants'
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
@@ -100,34 +101,58 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-white">
       <Navigation />
 
+      <style jsx>{`
+        .tab-button::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background-color: transparent;
+        }
+        .tab-button.active::after {
+          background-color: black;
+        }
+        .tab-button:hover::after {
+          background-color: black;
+        }
+        .action-link::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background-color: transparent;
+        }
+        .action-link:hover::after {
+          background-color: currentColor;
+        }
+      `}</style>
       <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Tab Navigation */}
-        <div className="mb-8 flex justify-center">
-          <div className="relative bg-gray-200 rounded-full p-1 flex">
-            <div
-              className="absolute top-1 bottom-1 bg-black rounded-full transition-all duration-300 ease-in-out"
-              style={{
-                width: 'calc(50% - 4px)',
-                left: activeTab === 'subletting' ? '4px' : 'calc(50% + 2px)'
-              }}
-            />
-            <button
-              onClick={() => setActiveTab('subletting')}
-              className={`relative z-10 px-6 py-2 text-lg rounded-full transition-colors duration-300 ${
-                activeTab === 'subletting' ? 'text-white' : 'text-black'
-              }`}
-            >
-              Subletting
-            </button>
-            <button
-              onClick={() => setActiveTab('looking_for')}
-              className={`relative z-10 px-6 py-2 text-lg rounded-full transition-colors duration-300 ${
-                activeTab === 'looking_for' ? 'text-white' : 'text-black'
-              }`}
-            >
-              Looking For
-            </button>
-          </div>
+        <div className="mb-16 flex justify-center gap-8">
+          <button
+            onClick={() => setActiveTab('subletting')}
+            className={`text-black relative tab-button ${activeTab === 'subletting' ? 'active' : ''}`}
+            style={{
+              fontFamily: FONT_FAMILY,
+              fontSize: FONT_SIZES.base
+            }}
+          >
+            Sublets
+          </button>
+          <button
+            onClick={() => setActiveTab('looking_for')}
+            className={`text-black relative tab-button ${activeTab === 'looking_for' ? 'active' : ''}`}
+            style={{
+              fontFamily: FONT_FAMILY,
+              fontSize: FONT_SIZES.base
+            }}
+          >
+            Requests
+          </button>
         </div>
 
         {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).length === 0 ? (
@@ -157,26 +182,26 @@ export default function DashboardPage() {
                 const primaryImage = listingWithExtras.listing_images?.find((img) => img.is_primary) || listingWithExtras.listing_images?.[0]
                 return (
                   <div key={listing.id} className="text-center">
-                    <div className="text-lg text-black">
+                    <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                       {listing.location}
                     </div>
-                    <div className="text-lg text-black">
-                      {(listing.available_from || listing.available_to) && 
-                        (listing.available_from && listing.available_to 
+                    <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
+                      {(listing.available_from || listing.available_to) &&
+                        (listing.available_from && listing.available_to
                           ? `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
-                          : listing.available_from 
+                          : listing.available_from
                           ? `From ${formatDate(listing.available_from)}`
-                          : listing.available_to 
+                          : listing.available_to
                           ? `Until ${formatDate(listing.available_to)}`
                           : ''
                         )
                       }
                     </div>
-                    <div className="text-lg text-black mb-4">
-                      ${(listing.price / 100).toFixed(0)}
+                    <div className="text-black mb-4" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
+                      {(listing.price / 100).toFixed(0)} usd
                     </div>
                     {(listingWithExtras.dog_friendly || listingWithExtras.cat_friendly) && (
-                      <div className="text-lg text-amber-700 mb-4">
+                      <div className="text-amber-700 mb-4" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                         {listingWithExtras.dog_friendly && '🐕 friendly '}
                         {listingWithExtras.cat_friendly && '🐱 friendly'}
                       </div>
@@ -204,13 +229,15 @@ export default function DashboardPage() {
                     <div className="flex justify-center gap-4">
                       <Link
                         href={`/dashboard/edit/${listing.id}`}
-                        className="text-lg text-black hover:underline"
+                        className="text-black relative action-link"
+                        style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => deleteListing(listing.id)}
-                        className="text-lg text-red-600 hover:underline"
+                        className="text-red-600 relative action-link"
+                        style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}
                       >
                         Delete
                       </button>

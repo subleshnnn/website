@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import ContactButton from '@/components/ContactButton'
 import Image from 'next/image'
+import { FONT_SIZES, FONT_FAMILY } from '@/lib/constants'
 
 // Force dynamic rendering since Navigation uses Clerk hooks
 export const dynamic = 'force-dynamic'
@@ -75,24 +76,24 @@ export default async function ListingPage({ params }: Props) {
           {/* Listing Information */}
           <div className="px-4 sm:px-6 lg:px-8 text-center">
             <div>
-              <div className="mb-8 text-lg text-black">
+              <div className="mb-8 text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                 <div>
                   {listing.location}
                 </div>
                 {(listing.available_from || listing.available_to) && (
                   <div>
-                    {listing.available_from && listing.available_to 
+                    {listing.available_from && listing.available_to
                       ? `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
-                      : listing.available_from 
+                      : listing.available_from
                       ? `From ${formatDate(listing.available_from)}`
-                      : listing.available_to 
+                      : listing.available_to
                       ? `Until ${formatDate(listing.available_to)}`
                       : ''
                     }
                   </div>
                 )}
                 <div>
-                  ${(listing.price / 100).toFixed(0)}
+                  {(listing.price / 100).toFixed(0)} usd
                 </div>
                 {(listing.dog_friendly || listing.cat_friendly) && (
                   <div className="text-amber-700">
@@ -109,11 +110,11 @@ export default async function ListingPage({ params }: Props) {
 
               <div className="prose mb-8 mx-auto" style={{ maxWidth: '80ch' }}>
                 {listing.description ? (
-                  <p className="text-black leading-relaxed text-lg">
+                  <p className="text-black leading-relaxed" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
                     {listing.description}
                   </p>
                 ) : (
-                  <p className="text-black text-lg">No description provided</p>
+                  <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>No description provided</p>
                 )}
               </div>
             </div>
@@ -136,7 +137,7 @@ export default async function ListingPage({ params }: Props) {
                         priority={index === 0}
                       />
                       {image.caption && (
-                        <p className="mt-2 text-lg text-black">{image.caption}</p>
+                        <p className="mt-2 text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>{image.caption}</p>
                       )}
                     </div>
                   ))}

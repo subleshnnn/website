@@ -320,126 +320,127 @@ export default function ImageUpload({ images, onImagesChange, thumbnails = [], o
 
       {/* Image Preview Grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((image, index) => (
-            <div key={index} className="space-y-2">
-              <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group">
-                <Image
-                  src={image}
-                  alt={`Upload ${index + 1}`}
-                  width={300}
-                  height={300}
-                  className="w-full h-full object-cover"
-                  onError={() => {
-                    console.error('❌ Image failed to load for index:', index);
-                    console.error('Image source starts with:', image.substring(0, 100));
-                    console.error('Full image length:', image.length);
-                    console.error('Image data type check:', typeof image);
-                    console.error('Is valid data URL:', image.startsWith('data:'));
-                  }}
-                  onLoad={() => {
-                    console.log('✅ Image loaded successfully for index:', index);
-                    console.log('Image source starts with:', image.substring(0, 50));
-                  }}
-                />
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {images.map((image, index) => (
+              <div key={index} className="space-y-2">
+                <div className="aspect-square bg-gray-200 overflow-hidden relative group">
+                  <Image
+                    src={image}
+                    alt={`Upload ${index + 1}`}
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      console.error('❌ Image failed to load for index:', index);
+                      console.error('Image source starts with:', image.substring(0, 100));
+                      console.error('Full image length:', image.length);
+                      console.error('Image data type check:', typeof image);
+                      console.error('Is valid data URL:', image.startsWith('data:'));
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Image loaded successfully for index:', index);
+                      console.log('Image source starts with:', image.substring(0, 50));
+                    }}
+                  />
 
-                {/* Image Controls */}
-                <div className="absolute inset-0 transition-all duration-200">
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-50">
-                    <div className="flex space-x-2">
-                      {/* Move Left */}
-                      {index > 0 && (
+                  {/* Image Controls */}
+                  <div className="absolute inset-0 transition-all duration-200">
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-50">
+                      <div className="flex space-x-2">
+                        {/* Move Left */}
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(index, index - 1)}
+                            className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                            title="Move left"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Delete */}
                         <button
                           type="button"
-                          onClick={() => moveImage(index, index - 1)}
-                          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                          title="Move left"
+                          onClick={() => removeImage(index)}
+                          className="p-1 bg-red-600 text-white rounded-full shadow-md hover:bg-red-700"
+                          title="Delete image"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                      )}
 
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="p-1 bg-red-600 text-white rounded-full shadow-md hover:bg-red-700"
-                        title="Delete image"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-
-                      {/* Move Right */}
-                      {index < images.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => moveImage(index, index + 1)}
-                          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                          title="Move right"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      )}
+                        {/* Move Right */}
+                        {index < images.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveImage(index, index + 1)}
+                            className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                            title="Move right"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Cover Badge */}
+                  {index === 0 && (
+                    <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded">
+                      Cover
+                    </div>
+                  )}
                 </div>
 
-                {/* Cover Badge */}
-                {index === 0 && (
-                  <div className="absolute top-2 left-2 bg-white text-black text-xs px-2 py-1 rounded">
-                    Cover
+                {/* Caption Input */}
+                {onImageCaptionsChange && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="Add caption..."
+                      value={imageCaptions[index] || ''}
+                      onChange={(e) => updateCaption(index, e.target.value)}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                   </div>
                 )}
               </div>
+            ))}
+          </div>
 
-              {/* Caption Input */}
-              {onImageCaptionsChange && (
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    placeholder="Add caption..."
-                    value={imageCaptions[index] || ''}
-                    onChange={(e) => updateCaption(index, e.target.value)}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-
-          {/* Add More Images Button */}
+          {/* Add More Images Button - Centered Below Grid */}
           {images.length < maxImages && (
-            <div className="aspect-square flex items-center justify-center">
+            <div className="text-center mt-8">
               <button
                 type="button"
                 onClick={() => document.getElementById('image-upload')?.click()}
-                className="w-12 h-12 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                className="text-black relative inline-block"
+                style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
                 title="Add more images"
               >
-                <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                Add More (+)
               </button>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {images.length === 0 && (
         <div
-          className="border-2 border-dashed border-gray-300 p-8 text-center text-black hover:bg-gray-100 transition-colors cursor-pointer"
+          className="border border-black p-8 text-center text-black hover:bg-gray-100 transition-colors cursor-pointer"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter}
           onClick={() => document.getElementById('image-upload')?.click()}
         >
-          <p className="text-lg text-gray-500 mb-2">Images - Drop here or click to upload</p>
+          <p className="text-black" style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}>Images - Drop here or click to upload</p>
         </div>
       )}
     </div>
