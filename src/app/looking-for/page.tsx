@@ -1,6 +1,5 @@
 'use client'
 
-import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -159,9 +158,7 @@ export default function LookingForPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation onFiltersChange={setFilters} />
-
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-20">
+      <main className="p-4">
         <LookingForPageContent filters={filters} />
       </main>
     </div>

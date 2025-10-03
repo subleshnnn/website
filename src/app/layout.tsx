@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { QueryProvider } from '@/lib/query-provider';
+import { FontProvider } from '@/contexts/FontContext';
+import LayoutContent from '@/components/LayoutContent';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,7 +45,11 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <QueryProvider>
-          {children}
+          <FontProvider>
+            <LayoutContent>
+              {children}
+            </LayoutContent>
+          </FontProvider>
         </QueryProvider>
       </body>
     </html>

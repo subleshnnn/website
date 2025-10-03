@@ -29,3 +29,10 @@ export type ListingImage = {
   image_url: string
   is_primary: boolean
 }
+
+export type Favorite = {
+  id: string
+  user_id: string
+  listing_id: string
+  created_at: string
+}

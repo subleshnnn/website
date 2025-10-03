@@ -6,7 +6,6 @@ import { useUser } from '@clerk/nextjs'
 export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -149,8 +148,8 @@ export default function ConversationPage() {
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        
+        <div className="p-4">
           <div className="text-center">Loading...</div>
         </div>
       </div>
@@ -160,8 +159,8 @@ export default function ConversationPage() {
   if (!user || !conversation) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        
+        <div className="p-4">
           <div className="text-center">Conversation not found.</div>
         </div>
       </div>
@@ -172,9 +171,9 @@ export default function ConversationPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="p-4">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-6">

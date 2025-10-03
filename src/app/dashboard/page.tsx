@@ -5,22 +5,24 @@ import { useUser } from '@clerk/nextjs'
 // Force dynamic rendering for pages that use Clerk
 export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
-import Navigation from '@/components/Navigation'
 import { supabase, type Listing } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
-import { FONT_SIZES, FONT_FAMILY } from '@/lib/constants'
+import { FONT_SIZES } from '@/lib/constants'
+import { useFont } from '@/contexts/FontContext'
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string, includeYear: boolean = true, includeMonth: boolean = true) {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
+  const options: Intl.DateTimeFormatOptions = {
     day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
+    ...(includeMonth && { month: 'short' }),
+    ...(includeYear && { year: 'numeric' })
+  }
+  return date.toLocaleDateString('en-GB', options)
 }
 
 export default function DashboardPage() {
+  const { fontFamily } = useFont()
   const { user, isLoaded } = useUser()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +39,7 @@ export default function DashboardPage() {
           listing_type,
           price,
           location,
+          property_type,
           available_from,
           available_to,
           dog_friendly,
@@ -89,8 +92,7 @@ export default function DashboardPage() {
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="p-4">
           <div className="text-center">Loading...</div>
         </div>
       </div>
@@ -99,8 +101,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
-
       <style jsx>{`
         .tab-button::after {
           content: '';
@@ -130,135 +130,134 @@ export default function DashboardPage() {
           background-color: currentColor;
         }
       `}</style>
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Tab Navigation */}
-        <div className="mb-16 flex justify-center gap-8">
-          <button
-            onClick={() => setActiveTab('subletting')}
-            className={`text-black relative tab-button ${activeTab === 'subletting' ? 'active' : ''}`}
-            style={{
-              fontFamily: FONT_FAMILY,
-              fontSize: FONT_SIZES.base
-            }}
-          >
-            Sublets
-          </button>
-          <button
-            onClick={() => setActiveTab('looking_for')}
-            className={`text-black relative tab-button ${activeTab === 'looking_for' ? 'active' : ''}`}
-            style={{
-              fontFamily: FONT_FAMILY,
-              fontSize: FONT_SIZES.base
-            }}
-          >
-            Requests
-          </button>
-        </div>
+      <main className="p-4">
+        <div>
+            {/* Tab Navigation */}
+            <div className="mb-16 flex gap-4 justify-center">
+              <button
+                onClick={() => setActiveTab('subletting')}
+                className={`text-black ${activeTab === 'subletting' ? 'underline' : ''}`}
+                style={{
+                  fontFamily: fontFamily,
+                  fontSize: FONT_SIZES.base
+                }}
+              >
+                Sublets
+              </button>
+              <button
+                onClick={() => setActiveTab('looking_for')}
+                className={`text-black ${activeTab === 'looking_for' ? 'underline' : ''}`}
+                style={{
+                  fontFamily: fontFamily,
+                  fontSize: FONT_SIZES.base
+                }}
+              >
+                Requests
+              </button>
+            </div>
 
         {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).length === 0 ? (
-          <div className="text-center">
-            <Link
-              href="/dashboard/create"
-              className="inline-flex items-center justify-center w-16 h-16 bg-white border border-black rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
-              </svg>
-            </Link>
+          <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+            No listings yet
           </div>
         ) : (
           <>
-            <div className="space-y-24">
+            <div className="space-y-4">
               {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).map((listing) => {
                 const listingWithExtras = listing as unknown as Listing & {
                   listing_type?: string
+                  property_type?: string
                   dog_friendly?: boolean
                   cat_friendly?: boolean
                   listing_images?: Array<{
                     image_url: string
+                    thumbnail_url?: string
                     is_primary: boolean
                   }>
                 }
                 const primaryImage = listingWithExtras.listing_images?.find((img) => img.is_primary) || listingWithExtras.listing_images?.[0]
                 return (
-                  <div key={listing.id} className="text-center">
-                    <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
-                      {listing.location}
-                    </div>
-                    <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
-                      {(listing.available_from || listing.available_to) &&
-                        (listing.available_from && listing.available_to
-                          ? `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
-                          : listing.available_from
-                          ? `From ${formatDate(listing.available_from)}`
-                          : listing.available_to
-                          ? `Until ${formatDate(listing.available_to)}`
-                          : ''
-                        )
-                      }
-                    </div>
-                    <div className="text-black mb-4" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
-                      {(listing.price / 100).toFixed(0)} usd
-                    </div>
-                    {(listingWithExtras.dog_friendly || listingWithExtras.cat_friendly) && (
-                      <div className="text-amber-700 mb-4" style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}>
-                        {listingWithExtras.dog_friendly && '🐕 friendly '}
-                        {listingWithExtras.cat_friendly && '🐱 friendly'}
+                  <div key={listing.id} className="border border-gray-400 p-4 relative group">
+                    <div className="flex gap-4 items-start">
+                      {primaryImage && (
+                        <div className="flex-shrink-0">
+                          <Image
+                            src={primaryImage.thumbnail_url || primaryImage.image_url}
+                            alt={`Listing in ${listing.location}`}
+                            width={88}
+                            height={88}
+                            className="object-cover"
+                            style={{ width: '88px', height: '88px' }}
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
+                        <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          <span className="text-black">{listing.location}</span>
+                          {listingWithExtras.property_type && (
+                            <span className="text-gray-500"> {listingWithExtras.property_type}</span>
+                          )}
+                        </div>
+                        <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          {(listing.available_from || listing.available_to) &&
+                            (() => {
+                              if (listing.available_from && listing.available_to) {
+                                const fromDate = new Date(listing.available_from)
+                                const toDate = new Date(listing.available_to)
+                                const sameYear = fromDate.getFullYear() === toDate.getFullYear()
+                                const sameMonth = fromDate.getMonth() === toDate.getMonth() && sameYear
+
+                                if (sameMonth) {
+                                  return `${fromDate.getDate()} – ${formatDate(listing.available_to)}`
+                                } else if (sameYear) {
+                                  return `${formatDate(listing.available_from, false)} – ${formatDate(listing.available_to)}`
+                                } else {
+                                  return `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
+                                }
+                              } else if (listing.available_from) {
+                                return `From ${formatDate(listing.available_from)}`
+                              } else if (listing.available_to) {
+                                return `Until ${formatDate(listing.available_to)}`
+                              }
+                              return ''
+                            })()
+                          }
+                        </div>
+                        <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          {(listing.price / 100).toFixed(0)} usd
+                          {(listingWithExtras.dog_friendly || listingWithExtras.cat_friendly) && (
+                            <span className="ml-2" style={{ display: 'inline-flex', gap: '10px' }}>
+                              {listingWithExtras.dog_friendly && <span>🐕</span>}
+                              {listingWithExtras.cat_friendly && <span>🐱</span>}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {primaryImage ? (
-                      <Image
-                        src={primaryImage.image_url}
-                        alt={`Listing in ${listing.location}`}
-                        width={400}
-                        height={400}
-                        className="h-auto w-full mb-4"
-                        style={{ maxHeight: '400px', objectFit: 'contain' }}
-                        loading="lazy"
-                        placeholder="blur"
-                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                        priority={false}
-                      />
-                    ) : (
-                      <div className="bg-gray-200 flex items-center justify-center mb-4" style={{ height: '300px' }}>
-                        <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                      <div className="flex gap-4 absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                        <Link
+                          href={`/dashboard/edit/${listing.id}`}
+                          className="text-black"
+                          style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, textDecoration: 'underline' }}
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => deleteListing(listing.id)}
+                          className="text-red-600"
+                          style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, textDecoration: 'underline' }}
+                        >
+                          Delete
+                        </button>
                       </div>
-                    )}
-                    <div className="flex justify-center gap-4">
-                      <Link
-                        href={`/dashboard/edit/${listing.id}`}
-                        className="text-black relative action-link"
-                        style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => deleteListing(listing.id)}
-                        className="text-red-600 relative action-link"
-                        style={{ fontSize: FONT_SIZES.base, fontFamily: FONT_FAMILY }}
-                      >
-                        Delete
-                      </button>
                     </div>
                   </div>
                 )
               })}
             </div>
-            
-            <div className="mt-8 text-center">
-              <Link 
-                href="/dashboard/create"
-                className="inline-flex items-center justify-center w-16 h-16 bg-white border border-black rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
-                </svg>
-              </Link>
-            </div>
           </>
         )}
+        </div>
       </main>
     </div>
   )

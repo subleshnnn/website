@@ -5,7 +5,6 @@ import { useUser } from '@clerk/nextjs'
 // Force dynamic rendering for pages that use Clerk
 export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
-import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -90,8 +89,8 @@ export default function InboxPage() {
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        
+        <div className="p-4">
           <div className="text-center">Loading...</div>
         </div>
       </div>
@@ -101,8 +100,8 @@ export default function InboxPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        
+        <div className="p-4">
           <div className="text-center">Please sign in to view your inbox.</div>
         </div>
       </div>
@@ -111,9 +110,9 @@ export default function InboxPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="p-4">
         <h1 className="text-2xl text-black mb-8 text-center">Inbox</h1>
 
         {conversations.length === 0 ? (

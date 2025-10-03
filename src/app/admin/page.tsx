@@ -5,7 +5,6 @@ import { useUser } from '@clerk/nextjs'
 // Force dynamic rendering for pages that use Clerk
 export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
-import Navigation from '@/components/Navigation'
 import { supabase } from '@/lib/supabase'
 
 interface Invitation {
@@ -181,7 +180,7 @@ export default function AdminPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <p>Please sign in to access admin features.</p>
         </div>
@@ -192,7 +191,7 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p>You don&apos;t have admin access to this page.</p>
@@ -203,7 +202,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

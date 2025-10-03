@@ -1,7 +1,7 @@
 // Global font size constants
 export const FONT_SIZES = {
-  base: '24px',
-  baseMobile: '20px',
+  base: '22px',
+  baseMobile: '18px',
 } as const
 
 // Font family constant

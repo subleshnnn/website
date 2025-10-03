@@ -6,9 +6,9 @@ import { useUser } from '@clerk/nextjs'
 export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Navigation from '@/components/Navigation'
 import dynamicImport from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
+import { useFont } from '@/contexts/FontContext'
 
 interface NominatimResult {
   display_name: string
@@ -22,6 +22,7 @@ const ImageUpload = dynamicImport(() => import('@/components/ImageUpload'), {
 export default function CreateListingPage() {
   const { user } = useUser()
   const router = useRouter()
+  const { fontFamily } = useFont()
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>([])
   const [thumbnails, setThumbnails] = useState<string[]>([])
@@ -187,8 +188,6 @@ export default function CreateListingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
-
       <style jsx>{`
         .tab-button::after {
           content: '';
@@ -219,7 +218,7 @@ export default function CreateListingPage() {
         }
       `}</style>
 
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="p-4">
         <div className="max-w-2xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -229,7 +228,7 @@ export default function CreateListingPage() {
               onClick={() => setFormData(prev => ({ ...prev, listing_type: 'subletting' }))}
               className={`text-black relative tab-button ${formData.listing_type === 'subletting' ? 'active' : ''}`}
               style={{
-                fontFamily: 'Cerial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '24px'
               }}
             >
@@ -240,7 +239,7 @@ export default function CreateListingPage() {
               onClick={() => setFormData(prev => ({ ...prev, listing_type: 'looking_for' }))}
               className={`text-black relative tab-button ${formData.listing_type === 'looking_for' ? 'active' : ''}`}
               style={{
-                fontFamily: 'Cerial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '24px'
               }}
             >
@@ -257,7 +256,7 @@ export default function CreateListingPage() {
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-black focus:outline-none text-black bg-white appearance-none"
               style={{
-                fontFamily: 'Cerial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '24px',
                 backgroundImage: 'none'
               }}
@@ -280,11 +279,11 @@ export default function CreateListingPage() {
               className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
               placeholder="Description"
               style={{
-                fontFamily: 'Cerial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '24px'
               }}
             />
-            <div className="text-sm text-gray-400 mt-1" style={{ fontFamily: 'Cerial, sans-serif' }}>
+            <div className="text-sm text-gray-400 mt-1" style={{ fontFamily: fontFamily }}>
               {formData.description.length}/280 characters
             </div>
           </div>
@@ -303,7 +302,7 @@ export default function CreateListingPage() {
                 className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
                 placeholder="Price (usd)"
                 style={{
-                  fontFamily: 'Cerial, sans-serif',
+                  fontFamily: fontFamily,
                   fontSize: '24px'
                 }}
               />
@@ -323,7 +322,7 @@ export default function CreateListingPage() {
                 placeholder="Location"
                 autoComplete="off"
                 style={{
-                  fontFamily: 'Cerial, sans-serif',
+                  fontFamily: fontFamily,
                   fontSize: '24px'
                 }}
               />
@@ -336,7 +335,7 @@ export default function CreateListingPage() {
                       onClick={() => selectLocation(suggestion)}
                       className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none text-black"
                       style={{
-                        fontFamily: 'Cerial, sans-serif',
+                        fontFamily: fontFamily,
                         fontSize: '24px'
                       }}
                     >
@@ -359,7 +358,7 @@ export default function CreateListingPage() {
               className="w-full px-3 py-2 border border-black focus:outline-none text-black placeholder-gray-400"
               placeholder="Contact Email"
               style={{
-                fontFamily: 'Cerial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '24px'
               }}
             />
@@ -376,7 +375,7 @@ export default function CreateListingPage() {
                 className="w-full px-3 py-2 border border-black focus:outline-none text-black"
                 title="Available From"
                 style={{
-                  fontFamily: 'Cerial, sans-serif',
+                  fontFamily: fontFamily,
                   fontSize: '24px'
                 }}
               />
@@ -392,7 +391,7 @@ export default function CreateListingPage() {
                 className="w-full px-3 py-2 border border-black focus:outline-none text-black"
                 title="Available Until"
                 style={{
-                  fontFamily: 'Cerial, sans-serif',
+                  fontFamily: fontFamily,
                   fontSize: '24px'
                 }}
               />
@@ -409,7 +408,7 @@ export default function CreateListingPage() {
                 onChange={handleInputChange}
                 className="rounded border-black text-black focus:outline-none"
               />
-              <label htmlFor="dog_friendly" className="text-black" style={{ fontFamily: 'Cerial, sans-serif', fontSize: '24px' }}>
+              <label htmlFor="dog_friendly" className="text-black" style={{ fontFamily: fontFamily, fontSize: '24px' }}>
                 🐕 Friendly
               </label>
             </div>
@@ -423,7 +422,7 @@ export default function CreateListingPage() {
                 onChange={handleInputChange}
                 className="rounded border-black text-black focus:outline-none"
               />
-              <label htmlFor="cat_friendly" className="text-black" style={{ fontFamily: 'Cerial, sans-serif', fontSize: '24px' }}>
+              <label htmlFor="cat_friendly" className="text-black" style={{ fontFamily: fontFamily, fontSize: '24px' }}>
                 🐱 Friendly
               </label>
             </div>
@@ -446,7 +445,7 @@ export default function CreateListingPage() {
               type="button"
               onClick={() => router.back()}
               className="text-red-600 relative action-link"
-              style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
+              style={{ fontSize: '24px', fontFamily: fontFamily }}
             >
               Cancel
             </button>
@@ -454,7 +453,7 @@ export default function CreateListingPage() {
               type="submit"
               disabled={loading}
               className="text-black relative action-link disabled:opacity-50"
-              style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
+              style={{ fontSize: '24px', fontFamily: fontFamily }}
             >
               {loading ? 'Creating...' : 'Create Listing'}
             </button>
