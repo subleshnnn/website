@@ -1,166 +1,347 @@
 'use client'
 
-import { supabase, type Listing } from '@/lib/supabase'
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-
 // Force dynamic rendering since Navigation uses Clerk hooks
 export const dynamic = 'force-dynamic'
 
-interface ListingWithImages extends Listing {
-  dog_friendly?: boolean
-  cat_friendly?: boolean
-  listing_images: Array<{
-    id: string
-    image_url: string
-    thumbnail_url?: string
-    is_primary: boolean
-  }>
-}
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import CityDisplay from '@/components/SwirlImage'
+import Image from 'next/image'
+import { useQuery } from '@tanstack/react-query'
+import { FONT_SIZES } from '@/lib/constants'
+import { useFilters } from '@/contexts/FilterContext'
+import { useFont } from '@/contexts/FontContext'
+import { useViewMode } from '@/contexts/ViewModeContext'
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string, includeYear: boolean = true, includeMonth: boolean = true) {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
+  const options: Intl.DateTimeFormatOptions = {
     day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
+    ...(includeMonth && { month: 'short' }),
+    ...(includeYear && { year: 'numeric' })
+  }
+  return date.toLocaleDateString('en-GB', options)
 }
 
-async function getLookingForListings(): Promise<ListingWithImages[]> {
+async function getListings(): Promise<ListingData[]> {
   try {
-    const { data, error } = await supabase
+    // Fetch requests (looking_for listings)
+    const { data: listings, error: listingsError } = await supabase
       .from('listings')
       .select(`
-        *,
-        listing_images (
-          id,
-          image_url,
-          is_primary
-        )
+        id,
+        location,
+        price,
+        property_type,
+        available_from,
+        available_to,
+        dog_friendly,
+        cat_friendly,
+        created_at
       `)
       .eq('listing_type', 'looking_for')
       .order('created_at', { ascending: false })
       .limit(12)
 
-    if (error) {
-      console.error('Error fetching looking for listings:', error)
-      console.error('Error details:', JSON.stringify(error, null, 2))
-      console.error('Error message:', error.message)
-      console.error('Error code:', error.code)
+    if (listingsError) {
+      console.error('Error fetching listings:', listingsError)
       return []
     }
 
-    return data || []
-  } catch (networkError) {
-    console.error('Network error fetching looking for listings:', networkError)
+    if (!listings || listings.length === 0) {
+      return []
+    }
+
+    // Fetch images separately for all listings
+    const listingIds = listings.map(l => l.id)
+    const { data: images } = await supabase
+      .from('listing_images')
+      .select('id, listing_id, image_url, thumbnail_url, is_primary')
+      .in('listing_id', listingIds)
+
+    // Map images to listings
+    const listingsWithImages = listings.map(listing => ({
+      ...listing,
+      listing_images: images?.filter(img => img.listing_id === listing.id) || []
+    }))
+
+    return listingsWithImages
+  } catch (error) {
+    console.error('Error:', error)
     return []
   }
 }
 
-function LookingForPageContent({ filters }: { filters: { city: string, type: string, maxBudget: number } }) {
-  const { data: allListings = [], isLoading } = useQuery({
+interface ListingImage {
+  id: string
+  listing_id?: string
+  image_url: string
+  thumbnail_url?: string
+  is_primary: boolean
+}
+
+interface ListingData {
+  id: string
+  location: string
+  price: number
+  property_type?: string
+  available_from?: string
+  available_to?: string
+  dog_friendly?: boolean
+  cat_friendly?: boolean
+  created_at: string
+  listing_images: ListingImage[]
+}
+
+export default function LookingForPage() {
+  const { filters, setFilters } = useFilters()
+  const { fontFamily } = useFont()
+  const { viewMode, setViewMode } = useViewMode()
+
+  const { data: allListings = [], isLoading } = useQuery<ListingData[]>({
     queryKey: ['looking-for-listings'],
-    queryFn: getLookingForListings,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: getListings,
+    staleTime: 5 * 60 * 1000,
   })
 
   // Filter listings based on current filters
   const listings = allListings.filter((listing) => {
-    // City filter - extract city name from full location for comparison
     if (filters.city && filters.city !== 'All Cities') {
       const listingCity = listing.location.includes(',')
         ? listing.location.split(',')[0].trim()
         : listing.location.trim()
-
       if (listingCity !== filters.city) return false
     }
 
-    // Type filter (skip if property_type field doesn't exist yet)
     if (filters.type && filters.type !== 'All Types') {
-      const propertyType = (listing as unknown as {property_type?: string}).property_type
-      if (propertyType && propertyType !== filters.type.toLowerCase()) return false
+      if (listing.property_type && listing.property_type !== filters.type.toLowerCase()) return false
     }
 
-    // Budget filter
-    if (listing.price > (filters.maxBudget * 100)) return false
+    if (filters.maxBudget > 0 && listing.price > (filters.maxBudget * 100)) return false
 
     return true
   })
 
+  const removeFilter = (filterType: 'city' | 'type' | 'budget') => {
+    if (filterType === 'city') {
+      setFilters({ ...filters, city: 'All Cities' })
+    } else if (filterType === 'type') {
+      setFilters({ ...filters, type: 'All Types' })
+    } else if (filterType === 'budget') {
+      setFilters({ ...filters, maxBudget: 0 })
+    }
+  }
+
   return (
-    <>
-      {listings.length === 0 && !isLoading && (
-        <div className="py-12">
-          <div className="mb-4">
-            <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <h3 className="text-lg text-gray-900 mb-2">No requests yet</h3>
-          <p className="text-gray-500 mb-4">Sublet requests will appear here.</p>
+    <div className="p-4">
+      {/* View Mode Toggle */}
+      <button
+        onClick={() => setViewMode(viewMode === 'column' ? 'row' : 'column')}
+        className="text-black fixed bg-white z-10"
+        style={{
+          fontFamily: fontFamily,
+          fontSize: FONT_SIZES.base,
+          transition: 'transform 0.3s ease',
+          top: '16px',
+          right: '16px'
+        }}
+      >
+        <span style={{
+          display: 'inline-block',
+          transition: 'transform 0.3s ease',
+          transform: viewMode === 'row' ? 'rotate(90deg)' : 'rotate(0deg)'
+        }}>
+          (-)
+        </span>
+      </button>
+
+      {/* Active filters displayed on one line */}
+      <div className="mb-4 flex flex-wrap gap-2 items-center">
+        <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          Search:
+        </span>
+        <span className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          Requests
+        </span>
+        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0) && (
+          <>
+          {filters.city && filters.city !== 'All Cities' && (
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>{filters.city}</span>
+              <button
+                onClick={() => removeFilter('city')}
+                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                style={{ fontSize: FONT_SIZES.base }}
+              >
+                ×
+              </button>
+            </div>
+            </>
+          )}
+          {filters.type && filters.type !== 'All Types' && (
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>{filters.type}</span>
+              <button
+                onClick={() => removeFilter('type')}
+                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                style={{ fontSize: FONT_SIZES.base }}
+              >
+                ×
+              </button>
+            </div>
+            </>
+          )}
+          {filters.maxBudget > 0 && (
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>under {filters.maxBudget} usd</span>
+                <button
+                  onClick={() => removeFilter('budget')}
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                  style={{ fontSize: FONT_SIZES.base }}
+                >
+                  ×
+                </button>
+              </div>
+            </>
+          )}
+          </>
+        )}
+      </div>
+
+      {listings.length === 0 && !isLoading ? (
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)', marginTop: '-10vh' }}>
+          <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+            Seems there is no requests here...
+          </p>
         </div>
-      )}
-      {listings.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-16 gap-y-24">
+      ) : (
+        <>
+          <div className={viewMode === 'column' ? 'space-y-4' : 'flex flex-wrap gap-4'} style={{ paddingRight: '60px' }}>
           {listings.map((listing) => {
             const primaryImage = listing.listing_images?.find(img => img.is_primary) || listing.listing_images?.[0]
             return (
-              <div key={listing.id} className="text-center">
-                <div className="text-black" style={{ fontSize: '20px', fontFamily: 'Cerial, sans-serif' }}>
-                  {(listing.available_from || listing.available_to) &&
-                    (listing.available_from && listing.available_to
-                      ? `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
-                      : listing.available_from
-                      ? `From ${formatDate(listing.available_from)}`
-                      : listing.available_to
-                      ? `Until ${formatDate(listing.available_to)}`
-                      : ''
-                    )
-                  }
-                </div>
-                <div className="text-black mb-4" style={{ fontSize: '20px', fontFamily: 'Cerial, sans-serif' }}>
-                  {(listing.price / 100).toFixed(0)} usd
-                  {(listing.dog_friendly || listing.cat_friendly) && (
-                    <span className="text-amber-700 ml-2">
-                      {listing.dog_friendly && '🐕 friendly '}
-                      {listing.cat_friendly && '🐱 friendly'}
-                    </span>
-                  )}
-                </div>
-                <Link
-                  href={`/listings/${listing.id}`}
-                  className="inline-block"
-                >
-                  <CityDisplay
-                    location={listing.location}
-                    className="h-auto"
-                    style={{ maxHeight: '400px' }}
-                  />
-                </Link>
-              </div>
+              <Link
+                key={listing.id}
+                href={`/listings/${listing.id}`}
+                className="block border border-gray-400 p-4"
+                style={viewMode === 'row' ? { aspectRatio: '1/1', display: 'flex', flexDirection: 'column', width: '420px', height: '420px' } : {}}
+              >
+                {viewMode === 'column' ? (
+                  <div className="flex gap-4 items-start">
+                    {primaryImage && (
+                      <div className="flex-shrink-0">
+                        <Image
+                          src={primaryImage.thumbnail_url || primaryImage.image_url}
+                          alt={`Request in ${listing.location}`}
+                          width={88}
+                          height={88}
+                          className="object-cover"
+                          style={{ width: '88px', height: '88px' }}
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
+                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        <span className="text-black">{listing.location}</span>
+                        {listing.property_type && (
+                          <span className="text-gray-500"> {listing.property_type}</span>
+                        )}
+                      </div>
+                      <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        {(listing.price / 100).toFixed(0)} usd
+                      </div>
+                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        {(listing.available_from || listing.available_to) ? (
+                          <span className="text-black">
+                            {listing.available_from && listing.available_to
+                              ? `${formatDate(listing.available_from, false, true)} – ${formatDate(listing.available_to)}`
+                              : listing.available_from
+                              ? `From ${formatDate(listing.available_from)}`
+                              : listing.available_to
+                              ? `Until ${formatDate(listing.available_to)}`
+                              : ''}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">Dates flexible</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                        {listing.dog_friendly && <span className="text-gray-500">🐕 friendly</span>}
+                        {listing.cat_friendly && <span className="text-gray-500">🐱 friendly</span>}
+                      </div>
+                      <div className="text-amber-700" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                        Request
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col justify-between">
+                    <div>
+                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        <span className="text-black">{listing.location}</span>
+                        {listing.property_type && (
+                          <span className="text-gray-500"> {listing.property_type}</span>
+                        )}
+                      </div>
+                      <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        {(listing.price / 100).toFixed(0)} usd
+                      </div>
+                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        {(listing.available_from || listing.available_to) ? (
+                          <span className="text-black">
+                            {listing.available_from && listing.available_to
+                              ? `${formatDate(listing.available_from, false, true)} – ${formatDate(listing.available_to)}`
+                              : listing.available_from
+                              ? `From ${formatDate(listing.available_from)}`
+                              : listing.available_to
+                              ? `Until ${formatDate(listing.available_to)}`
+                              : ''}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">Dates flexible</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-1" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                        {listing.dog_friendly && <span className="text-gray-500">🐕 friendly</span>}
+                        {listing.cat_friendly && <span className="text-gray-500">🐱 friendly</span>}
+                      </div>
+                      <div className="text-amber-700 mt-1" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                        Request
+                      </div>
+                    </div>
+                    {primaryImage && (
+                      <div className="mt-4">
+                        <Image
+                          src={primaryImage.thumbnail_url || primaryImage.image_url}
+                          alt={`Request in ${listing.location}`}
+                          width={352}
+                          height={264}
+                          className="object-cover w-full"
+                          style={{ maxHeight: '264px' }}
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Link>
             )
           })}
         </div>
+        </>
       )}
-    </>
-  )
-}
-
-export default function LookingForPage() {
-  const [filters, setFilters] = useState({
-    city: '',
-    type: '',
-    maxBudget: 5000
-  })
-
-  return (
-    <div className="min-h-screen bg-white">
-      <main className="p-4">
-        <LookingForPageContent filters={filters} />
-      </main>
     </div>
   )
 }

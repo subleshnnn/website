@@ -280,6 +280,11 @@ export default function LeftNavigation() {
               onChange={(e) => {
                 const newView = e.target.value
                 setSelectedView(newView)
+                if (newView === 'Requests') {
+                  router.push('/looking-for')
+                } else {
+                  router.push('/')
+                }
               }}
               className="absolute inset-0 opacity-0 cursor-pointer w-full"
             >

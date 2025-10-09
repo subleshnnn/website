@@ -164,49 +164,69 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
       </button>
 
       {/* Active filters displayed on one line */}
-      {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0) && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-            Search:
-          </span>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          Search:
+        </span>
+        <span className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          Sublets
+        </span>
+        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0) && (
+          <>
           {filters.city && filters.city !== 'All Cities' && (
-            <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-              <span>{filters.city}</span>
-              <button
-                onClick={() => removeFilter('city')}
-                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                style={{ fontSize: FONT_SIZES.base }}
-              >
-                ×
-              </button>
-            </div>
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>{filters.city}</span>
+                <button
+                  onClick={() => removeFilter('city')}
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                  style={{ fontSize: FONT_SIZES.base }}
+                >
+                  ×
+                </button>
+              </div>
+            </>
           )}
           {filters.type && filters.type !== 'All Types' && (
-            <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-              <span>{filters.type}</span>
-              <button
-                onClick={() => removeFilter('type')}
-                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                style={{ fontSize: FONT_SIZES.base }}
-              >
-                ×
-              </button>
-            </div>
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>{filters.type}</span>
+                <button
+                  onClick={() => removeFilter('type')}
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                  style={{ fontSize: FONT_SIZES.base }}
+                >
+                  ×
+                </button>
+              </div>
+            </>
           )}
           {filters.maxBudget > 0 && (
-            <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-              <span>under {filters.maxBudget} usd</span>
-              <button
-                onClick={() => removeFilter('budget')}
-                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                style={{ fontSize: FONT_SIZES.base }}
-              >
-                ×
-              </button>
-            </div>
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>under {filters.maxBudget} usd</span>
+                <button
+                  onClick={() => removeFilter('budget')}
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
+                  style={{ fontSize: FONT_SIZES.base }}
+                >
+                  ×
+                </button>
+              </div>
+            </>
           )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {listings.length === 0 && !isLoading ? (
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)', marginTop: '-10vh' }}>

@@ -268,13 +268,20 @@ export default function EditListingPage() {
         .action-link:hover::after {
           background-color: currentColor;
         }
+        input[type="date"]::-webkit-datetime-edit {
+          color: #9ca3af;
+        }
+        input[type="date"]:focus::-webkit-datetime-edit,
+        input[type="date"]:valid::-webkit-datetime-edit {
+          color: black;
+        }
       `}</style>
 
       <main className="p-4">
         <div className="max-w-2xl mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-          <div className="mb-16 flex justify-center gap-8">
+          <div className="mb-8 flex justify-center gap-8">
             <button
               type="button"
               onClick={() => setFormData(prev => ({ ...prev, listing_type: 'subletting' }))}
@@ -300,27 +307,33 @@ export default function EditListingPage() {
           </div>
 
           {/* Property Type Dropdown */}
-          <div>
+          <div className="relative">
             <select
               id="property_type"
               name="property_type"
               value={formData.property_type}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-black focus:outline-none text-black bg-white appearance-none"
+              className="w-full px-3 py-2 border border-black focus:outline-none bg-white appearance-none pr-10"
               style={{
                 fontFamily: fontFamily,
                 fontSize: '24px',
-                backgroundImage: 'none'
+                color: formData.property_type ? 'black' : '#9ca3af'
               }}
             >
-              <option value="">Select Property Type</option>
+              <option value="">Property Type</option>
               <option value="room">Room</option>
               <option value="studio">Studio</option>
               <option value="apartment">Apartment</option>
             </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-black">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
           </div>
 
-          <div>
+          <div className="relative">
             <textarea
               id="description"
               name="description"
@@ -332,15 +345,16 @@ export default function EditListingPage() {
               placeholder="Description"
               style={{
                 fontFamily: fontFamily,
-                fontSize: '24px'
+                fontSize: '24px',
+                paddingBottom: '32px'
               }}
             />
-            <div className="text-sm text-gray-400 mt-1" style={{ fontFamily: fontFamily }}>
-              {formData.description.length}/280 characters
+            <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none" style={{ fontFamily: fontFamily }}>
+              {formData.description.length}/280
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <input
                 type="number"
@@ -395,7 +409,7 @@ export default function EditListingPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <input
                 type="date"
@@ -404,10 +418,10 @@ export default function EditListingPage() {
                 value={formData.available_from}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-black focus:outline-none text-black"
-                title="Available From"
                 style={{
                   fontFamily: fontFamily,
-                  fontSize: '24px'
+                  fontSize: '24px',
+                  colorScheme: 'light'
                 }}
               />
             </div>
@@ -420,16 +434,16 @@ export default function EditListingPage() {
                 value={formData.available_to}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-black focus:outline-none text-black"
-                title="Available Until"
                 style={{
                   fontFamily: fontFamily,
-                  fontSize: '24px'
+                  fontSize: '24px',
+                  colorScheme: 'light'
                 }}
               />
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="flex items-center gap-8">
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -471,7 +485,7 @@ export default function EditListingPage() {
             />
           </div>
 
-          <div className="flex justify-center gap-4 pt-6">
+          <div className="flex justify-center gap-4 pt-4">
             <button
               type="button"
               onClick={() => router.push('/dashboard')}

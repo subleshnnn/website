@@ -8,8 +8,9 @@ import { ViewModeProvider } from '@/contexts/ViewModeContext'
 export default function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAltRoute = pathname?.startsWith('/alt')
+  const isTextEditorRoute = pathname?.startsWith('/text-editor-test')
 
-  if (isAltRoute) {
+  if (isAltRoute || isTextEditorRoute) {
     return <>{children}</>
   }
 

@@ -434,13 +434,13 @@ export default function ImageUpload({ images, onImagesChange, thumbnails = [], o
 
       {images.length === 0 && (
         <div
-          className="border border-black p-8 text-center text-black hover:bg-gray-100 transition-colors cursor-pointer"
+          className="border border-black p-8 text-center hover:bg-gray-100 transition-colors cursor-pointer"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter}
           onClick={() => document.getElementById('image-upload')?.click()}
         >
-          <p className="text-black" style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}>Images - Drop here or click to upload</p>
+          <p className="text-gray-400" style={{ fontSize: '24px', fontFamily: 'Monaco, monospace' }}>Drop images here</p>
         </div>
       )}
     </div>
