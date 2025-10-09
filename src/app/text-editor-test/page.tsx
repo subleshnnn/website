@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useDrag } from '@use-gesture/react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useFont } from '@/contexts/FontContext'
 import { FONT_SIZES } from '@/lib/constants'
 import { useSearchParams } from 'next/navigation'
@@ -45,7 +44,7 @@ interface DrawingElement {
   scale: number
 }
 
-export default function TextEditorTest() {
+function TextEditorTestContent() {
   const { fontFamily } = useFont()
   const searchParams = useSearchParams()
   const isEmbedMode = searchParams.get('mode') === 'embed'
@@ -1675,8 +1674,8 @@ export default function TextEditorTest() {
                       height={height}
                       fill="transparent"
                       style={{ cursor: drawingMode ? 'default' : 'move', pointerEvents: 'auto' }}
-                      onPointerDown={(e) => handleDrawingMouseDown(e as any, drawing.id)}
-                      onClick={(e) => handleDrawingClick(e as any, drawing.id)}
+                      onPointerDown={(e) => handleDrawingMouseDown(e as React.PointerEvent<SVGRectElement>, drawing.id)}
+                      onClick={(e) => handleDrawingClick(e as React.MouseEvent<SVGRectElement>, drawing.id)}
                     />
                     {/* Render all strokes in the group */}
                     {drawing.strokes.map((stroke, idx) => (
@@ -2168,5 +2167,13 @@ export default function TextEditorTest() {
       </div>
       </div>
     </>
+  )
+}
+
+export default function TextEditorTest() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TextEditorTestContent />
+    </Suspense>
   )
 }

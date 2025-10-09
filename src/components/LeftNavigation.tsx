@@ -8,12 +8,10 @@ import { supabase } from '@/lib/supabase'
 import { FONT_SIZES } from '@/lib/constants'
 import { useFilters } from '@/contexts/FilterContext'
 import { useFont } from '@/contexts/FontContext'
-import { useViewMode } from '@/contexts/ViewModeContext'
 
 export default function LeftNavigation() {
   const { setFilters } = useFilters()
   const { fontFamily } = useFont()
-  const { viewMode, setViewMode } = useViewMode()
   const { isSignedIn, isLoaded } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()

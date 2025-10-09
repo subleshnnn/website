@@ -149,15 +149,6 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
     100, 200, 300, 400, 500, 600, 700, 800, 900, 1000
   ]
 
-  const handleFilterChange = () => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        city: city === 'All Cities' ? '' : city,
-        type: type === 'All Types' ? '' : type,
-        maxBudget
-      })
-    }
-  }
 
   const handleCityChange = (newCity: string) => {
     setCity(newCity)
