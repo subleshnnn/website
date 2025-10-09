@@ -96,7 +96,7 @@ interface ListingData {
   }>
 }
 
-function HomePageContent({ filters, viewMode }: { filters: { city: string, type: string, maxBudget: number }, viewMode: 'column' | 'row' }) {
+function HomePageContent({ filters, viewMode }: { filters: { city: string, type: string, maxBudget: number, dateFrom: string, dateTo: string }, viewMode: 'column' | 'row' }) {
   const { fontFamily } = useFont()
   const { setFilters } = useFilters()
   const { setViewMode } = useViewMode()
@@ -107,13 +107,17 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const removeFilter = (filterType: 'city' | 'type' | 'budget') => {
+  const removeFilter = (filterType: 'city' | 'type' | 'budget' | 'dateFrom' | 'dateTo') => {
     if (filterType === 'city') {
       setFilters({ ...filters, city: 'All Cities' })
     } else if (filterType === 'type') {
       setFilters({ ...filters, type: 'All Types' })
     } else if (filterType === 'budget') {
       setFilters({ ...filters, maxBudget: 0 })
+    } else if (filterType === 'dateFrom') {
+      setFilters({ ...filters, dateFrom: '' })
+    } else if (filterType === 'dateTo') {
+      setFilters({ ...filters, dateTo: '' })
     }
   }
 
@@ -164,29 +168,25 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
       </button>
 
       {/* Active filters displayed on one line */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap gap-2 items-center">
         <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
           Search:
         </span>
         <span className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
           Sublets
         </span>
-        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0) && (
+        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0 || filters.dateFrom || filters.dateTo) && (
           <>
           {filters.city && filters.city !== 'All Cities' && (
             <>
               <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 &gt;
               </span>
-              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 <span>{filters.city}</span>
-                <button
-                  onClick={() => removeFilter('city')}
-                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                  style={{ fontSize: FONT_SIZES.base }}
-                >
+                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('city')}>
                   ×
-                </button>
+                </span>
               </div>
             </>
           )}
@@ -195,15 +195,11 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
               <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 &gt;
               </span>
-              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 <span>{filters.type}</span>
-                <button
-                  onClick={() => removeFilter('type')}
-                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                  style={{ fontSize: FONT_SIZES.base }}
-                >
+                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('type')}>
                   ×
-                </button>
+                </span>
               </div>
             </>
           )}
@@ -212,19 +208,55 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
               <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 &gt;
               </span>
-              <div className="group relative inline-flex items-center text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
                 <span>under {filters.maxBudget} usd</span>
-                <button
-                  onClick={() => removeFilter('budget')}
-                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 cursor-pointer"
-                  style={{ fontSize: FONT_SIZES.base }}
+                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('budget')}>
+                  ×
+                </span>
+              </div>
+            </>
+          )}
+          {(filters.dateFrom || filters.dateTo) && (
+            <>
+              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                &gt;
+              </span>
+              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                <span>
+                  {filters.dateFrom && filters.dateTo
+                    ? `${formatDate(filters.dateFrom, false, true)} - ${formatDate(filters.dateTo)}`
+                    : filters.dateFrom
+                    ? `from ${formatDate(filters.dateFrom)}`
+                    : `to ${formatDate(filters.dateTo)}`}
+                </span>
+                <span
+                  onClick={() => {
+                    if (filters.dateFrom && filters.dateTo) {
+                      setFilters({ ...filters, dateFrom: '', dateTo: '' })
+                    } else if (filters.dateFrom) {
+                      removeFilter('dateFrom')
+                    } else {
+                      removeFilter('dateTo')
+                    }
+                  }}
+                  className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1"
+                  style={{ fontSize: FONT_SIZES.base, width: '0px' }}
                 >
                   ×
-                </button>
+                </span>
               </div>
             </>
           )}
           </>
+        )}
+        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0 || filters.dateFrom || filters.dateTo) && (
+          <span
+            onClick={() => setFilters({ city: 'All Cities', type: 'All Types', maxBudget: 0, dateFrom: '', dateTo: '' })}
+            className="text-red-600 cursor-pointer ml-2"
+            style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}
+          >
+            ×
+          </span>
         )}
       </div>
 

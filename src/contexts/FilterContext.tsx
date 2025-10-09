@@ -7,8 +7,10 @@ interface FilterContextType {
     city: string
     type: string
     maxBudget: number
+    dateFrom: string
+    dateTo: string
   }
-  setFilters: (filters: { city: string; type: string; maxBudget: number }) => void
+  setFilters: (filters: { city: string; type: string; maxBudget: number; dateFrom: string; dateTo: string }) => void
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined)
@@ -17,7 +19,9 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState({
     city: 'All Cities',
     type: 'All Types',
-    maxBudget: 0 // 0 means no budget filter
+    maxBudget: 0, // 0 means no budget filter
+    dateFrom: '',
+    dateTo: ''
   })
 
   return (

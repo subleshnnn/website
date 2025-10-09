@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
@@ -28,6 +28,7 @@ export default function LeftNavigation() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
+  const datePickerRef = useRef<HTMLDivElement>(null)
 
   // Animated colors state for filters
   const colors = ['#60a5fa', '#4ade80', '#f87171', '#c084fc', '#facc15', '#f472b6', '#818cf8', '#fb923c', '#2dd4bf']
@@ -74,6 +75,23 @@ export default function LeftNavigation() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setShowDatePicker(false)
+      }
+    }
+
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDatePicker])
 
   // Update selectedView based on current pathname
   useEffect(() => {
@@ -147,7 +165,9 @@ export default function LeftNavigation() {
     setFilters({
       city: newCity,
       type: type,
-      maxBudget
+      maxBudget,
+      dateFrom,
+      dateTo
     })
   }
 
@@ -156,7 +176,9 @@ export default function LeftNavigation() {
     setFilters({
       city: city,
       type: newType,
-      maxBudget
+      maxBudget,
+      dateFrom,
+      dateTo
     })
   }
 
@@ -165,7 +187,9 @@ export default function LeftNavigation() {
     setFilters({
       city: city,
       type: type,
-      maxBudget: newBudget
+      maxBudget: newBudget,
+      dateFrom,
+      dateTo
     })
   }
 
@@ -181,11 +205,15 @@ export default function LeftNavigation() {
             setCity('All Cities')
             setType('All Types')
             setMaxBudget(0)
+            setDateFrom('')
+            setDateTo('')
             setSelectedView('All Posts')
             setFilters({
               city: 'All Cities',
               type: 'All Types',
-              maxBudget: 0
+              maxBudget: 0,
+              dateFrom: '',
+              dateTo: ''
             })
           }}
         >
@@ -304,7 +332,7 @@ export default function LeftNavigation() {
         </div>
 
         {/* Dates Filter */}
-        <div className="relative flex justify-between items-center">
+        <div ref={datePickerRef} className="relative flex justify-between items-center">
           <button
             onClick={() => setShowDatePicker(!showDatePicker)}
             className="flex-1 text-left text-black bg-transparent cursor-pointer"
@@ -322,7 +350,7 @@ export default function LeftNavigation() {
           >
             +
           </span>
-        </div>
+
 
         {/* Date Picker Popup */}
         {showDatePicker && (
@@ -334,7 +362,16 @@ export default function LeftNavigation() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => {
+                  setDateFrom(e.target.value)
+                  setFilters({
+                    city,
+                    type,
+                    maxBudget,
+                    dateFrom: e.target.value,
+                    dateTo
+                  })
+                }}
                 className="w-full border border-gray-400 p-2 text-black"
                 style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
               />
@@ -346,7 +383,16 @@ export default function LeftNavigation() {
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => {
+                  setDateTo(e.target.value)
+                  setFilters({
+                    city,
+                    type,
+                    maxBudget,
+                    dateFrom,
+                    dateTo: e.target.value
+                  })
+                }}
                 className="w-full border border-gray-400 p-2 text-black"
                 style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
               />
@@ -360,6 +406,7 @@ export default function LeftNavigation() {
             </button>
           </div>
         )}
+        </div>
 
         {/* Budget Filter */}
         <div
