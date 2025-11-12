@@ -10,6 +10,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { FONT_SIZES } from '@/lib/constants'
 import { useFont } from '@/contexts/FontContext'
+import { useResponsiveFontSize } from '@/hooks/useResponsiveFontSize'
 
 function formatDate(dateString: string, includeYear: boolean = true, includeMonth: boolean = true) {
   const date = new Date(dateString)
@@ -23,10 +24,10 @@ function formatDate(dateString: string, includeYear: boolean = true, includeMont
 
 export default function DashboardPage() {
   const { fontFamily } = useFont()
+  const fontSize = useResponsiveFontSize()
   const { user, isLoaded } = useUser()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'subletting' | 'looking_for'>('subletting')
 
   const fetchUserListings = useCallback(async () => {
     if (!user) return
@@ -91,9 +92,9 @@ export default function DashboardPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="p-4">
-          <div className="text-center">Loading...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-black" style={{ fontFamily: fontFamily, fontSize: fontSize }}>
+          Loading...
         </div>
       </div>
     )
@@ -130,40 +131,22 @@ export default function DashboardPage() {
           background-color: currentColor;
         }
       `}</style>
-      <main className="p-4">
+      <main className="p-4 sm:p-6 lg:p-8 xl:pt-4">
         <div>
-            {/* Tab Navigation */}
-            <div className="mb-16 flex gap-4 justify-center">
-              <button
-                onClick={() => setActiveTab('subletting')}
-                className={`text-black ${activeTab === 'subletting' ? 'underline' : ''}`}
-                style={{
-                  fontFamily: fontFamily,
-                  fontSize: FONT_SIZES.base
-                }}
-              >
-                Sublets
-              </button>
-              <button
-                onClick={() => setActiveTab('looking_for')}
-                className={`text-black ${activeTab === 'looking_for' ? 'underline' : ''}`}
-                style={{
-                  fontFamily: fontFamily,
-                  fontSize: FONT_SIZES.base
-                }}
-              >
-                Requests
-              </button>
+        {listings.length === 0 ? (
+          <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+            <div className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
+              No listings yet
             </div>
-
-        {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).length === 0 ? (
-          <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-            No listings yet
           </div>
         ) : (
           <>
-            <div className="space-y-4">
-              {listings.filter(listing => ((listing as unknown as {listing_type?: string}).listing_type || 'subletting') === activeTab).map((listing) => {
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+              gap: '16px'
+            }}>
+              {listings.map((listing) => {
                 const listingWithExtras = listing as unknown as Listing & {
                   listing_type?: string
                   property_type?: string
@@ -177,54 +160,41 @@ export default function DashboardPage() {
                 }
                 const primaryImage = listingWithExtras.listing_images?.find((img) => img.is_primary) || listingWithExtras.listing_images?.[0]
                 return (
-                  <div key={listing.id} className="border border-gray-400 p-4 relative group">
-                    <div className="flex gap-4 items-start">
-                      {primaryImage && (
-                        <div className="flex-shrink-0">
-                          <Image
-                            src={primaryImage.thumbnail_url || primaryImage.image_url}
-                            alt={`Listing in ${listing.location}`}
-                            width={88}
-                            height={88}
-                            className="object-cover"
-                            style={{ width: '88px', height: '88px' }}
-                            loading="lazy"
-                          />
+                  <div key={listing.id} className="border border-gray-400 p-4 flex flex-col" style={{ borderRadius: '8px', aspectRatio: '1/1' }}>
+                    <div className="flex flex-col gap-1 mb-2" style={{ minHeight: '88px' }}>
+                      <div className="flex items-start justify-between" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        <span className="text-black">{listing.location}</span>
+                        {listingWithExtras.property_type && (
+                          <span className="text-gray-500 ml-2">{listingWithExtras.property_type}</span>
+                        )}
+                      </div>
+                      {(listing.available_from || listing.available_to) && (
+                        <div className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          {(() => {
+                            if (listing.available_from && listing.available_to) {
+                              const fromDate = new Date(listing.available_from)
+                              const toDate = new Date(listing.available_to)
+                              const sameYear = fromDate.getFullYear() === toDate.getFullYear()
+                              const sameMonth = fromDate.getMonth() === toDate.getMonth() && sameYear
+
+                              if (sameMonth) {
+                                return `${fromDate.getDate()} – ${formatDate(listing.available_to)}`
+                              } else if (sameYear) {
+                                return `${formatDate(listing.available_from, false)} – ${formatDate(listing.available_to)}`
+                              } else {
+                                return `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
+                              }
+                            } else if (listing.available_from) {
+                              return `From ${formatDate(listing.available_from)}`
+                            } else if (listing.available_to) {
+                              return `Until ${formatDate(listing.available_to)}`
+                            }
+                            return ''
+                          })()}
                         </div>
                       )}
-                      <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
-                        <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                          <span className="text-black">{listing.location}</span>
-                          {listingWithExtras.property_type && (
-                            <span className="text-gray-500"> {listingWithExtras.property_type}</span>
-                          )}
-                        </div>
-                        <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                          {(listing.available_from || listing.available_to) &&
-                            (() => {
-                              if (listing.available_from && listing.available_to) {
-                                const fromDate = new Date(listing.available_from)
-                                const toDate = new Date(listing.available_to)
-                                const sameYear = fromDate.getFullYear() === toDate.getFullYear()
-                                const sameMonth = fromDate.getMonth() === toDate.getMonth() && sameYear
-
-                                if (sameMonth) {
-                                  return `${fromDate.getDate()} – ${formatDate(listing.available_to)}`
-                                } else if (sameYear) {
-                                  return `${formatDate(listing.available_from, false)} – ${formatDate(listing.available_to)}`
-                                } else {
-                                  return `${formatDate(listing.available_from)} – ${formatDate(listing.available_to)}`
-                                }
-                              } else if (listing.available_from) {
-                                return `From ${formatDate(listing.available_from)}`
-                              } else if (listing.available_to) {
-                                return `Until ${formatDate(listing.available_to)}`
-                              }
-                              return ''
-                            })()
-                          }
-                        </div>
-                        <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div className="flex items-center justify-between" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                        <div className="text-gray-500">
                           {(listing.price / 100).toFixed(0)} usd
                           {(listingWithExtras.dog_friendly || listingWithExtras.cat_friendly) && (
                             <span className="ml-2" style={{ display: 'inline-flex', gap: '10px' }}>
@@ -233,23 +203,43 @@ export default function DashboardPage() {
                             </span>
                           )}
                         </div>
-                      </div>
-                      <div className="flex gap-4 absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         <Link
                           href={`/dashboard/edit/${listing.id}`}
-                          className="text-black"
-                          style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, textDecoration: 'underline' }}
+                          className="text-black min-[500px]:hidden"
+                          style={{ fontSize: fontSize, fontFamily: fontFamily }}
                         >
                           Edit
                         </Link>
-                        <button
-                          onClick={() => deleteListing(listing.id)}
-                          className="text-red-600"
-                          style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, textDecoration: 'underline' }}
-                        >
-                          Delete
-                        </button>
                       </div>
+                    </div>
+                    {primaryImage && (
+                      <div className="w-full overflow-hidden flex-1 flex items-start justify-start">
+                        <Image
+                          src={primaryImage.thumbnail_url || primaryImage.image_url}
+                          alt={`Listing in ${listing.location}`}
+                          width={400}
+                          height={400}
+                          className="w-full h-full"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'left top' }}
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="hidden min-[500px]:flex gap-4 mt-4">
+                      <Link
+                        href={`/dashboard/edit/${listing.id}`}
+                        className="text-black"
+                        style={{ fontSize: fontSize, fontFamily: fontFamily }}
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => deleteListing(listing.id)}
+                        className="text-red-600"
+                        style={{ fontSize: fontSize, fontFamily: fontFamily }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 )

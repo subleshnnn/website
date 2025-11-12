@@ -11,6 +11,7 @@ import { FONT_SIZES } from '@/lib/constants'
 import { useFilters } from '@/contexts/FilterContext'
 import { useFont } from '@/contexts/FontContext'
 import { useViewMode } from '@/contexts/ViewModeContext'
+import { useResponsiveFontSize } from '@/hooks/useResponsiveFontSize'
 
 function formatDate(dateString: string, includeYear: boolean = true, includeMonth: boolean = true) {
   const date = new Date(dateString)
@@ -95,6 +96,7 @@ interface ListingData {
 export default function LookingForPage() {
   const { filters, setFilters } = useFilters()
   const { fontFamily } = useFont()
+  const fontSize = useResponsiveFontSize()
   const { viewMode, setViewMode } = useViewMode()
 
   const { data: allListings = [], isLoading } = useQuery<ListingData[]>({
@@ -105,28 +107,45 @@ export default function LookingForPage() {
 
   // Filter listings based on current filters
   const listings = allListings.filter((listing) => {
-    if (filters.city && filters.city !== 'All Cities') {
-      const listingCity = listing.location.includes(',')
-        ? listing.location.split(',')[0].trim()
-        : listing.location.trim()
-      if (listingCity !== filters.city) return false
+    // City filter - check if any of the selected cities appears in the location string
+    if (filters.cities && filters.cities.length > 0) {
+      const locationLower = listing.location.toLowerCase()
+      const matchesCity = filters.cities.some(city =>
+        locationLower.includes(city.toLowerCase())
+      )
+      if (!matchesCity) return false
     }
 
-    if (filters.type && filters.type !== 'All Types') {
-      if (listing.property_type && listing.property_type !== filters.type.toLowerCase()) return false
+    // Type filter - check if listing type matches any selected types
+    if (filters.types && filters.types.length > 0) {
+      const propertyType = listing.property_type
+      if (!propertyType || !filters.types.some(type =>
+        propertyType.toLowerCase() === type.toLowerCase()
+      )) return false
     }
 
+    // Budget filter - only apply if maxBudget > 0
     if (filters.maxBudget > 0 && listing.price > (filters.maxBudget * 100)) return false
 
     return true
   })
 
-  const removeFilter = (filterType: 'city' | 'type' | 'budget' | 'dateFrom' | 'dateTo') => {
-    if (filterType === 'city') {
-      setFilters({ ...filters, city: 'All Cities' })
-    } else if (filterType === 'type') {
-      setFilters({ ...filters, type: 'All Types' })
-    } else if (filterType === 'budget') {
+  const removeCity = (cityToRemove: string) => {
+    setFilters({
+      ...filters,
+      cities: filters.cities.filter(c => c !== cityToRemove)
+    })
+  }
+
+  const removeType = (typeToRemove: string) => {
+    setFilters({
+      ...filters,
+      types: filters.types.filter(t => t !== typeToRemove)
+    })
+  }
+
+  const removeFilter = (filterType: 'budget' | 'dateFrom' | 'dateTo') => {
+    if (filterType === 'budget') {
       setFilters({ ...filters, maxBudget: 0 })
     } else if (filterType === 'dateFrom') {
       setFilters({ ...filters, dateFrom: '' })
@@ -143,7 +162,7 @@ export default function LookingForPage() {
         className="text-black fixed bg-white z-10"
         style={{
           fontFamily: fontFamily,
-          fontSize: FONT_SIZES.base,
+          fontSize: fontSize,
           transition: 'transform 0.3s ease',
           top: '16px',
           right: '16px'
@@ -159,107 +178,91 @@ export default function LookingForPage() {
       </button>
 
       {/* Active filters displayed on one line */}
-      <div className="mb-4 flex flex-wrap gap-2 items-center">
-        <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-          Search:
-        </span>
-        <span className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-          Requests
-        </span>
-        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0 || filters.dateFrom || filters.dateTo) && (
-          <>
-          {filters.city && filters.city !== 'All Cities' && (
-            <>
-              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                &gt;
+      {(filters.cities.length > 0 || filters.types.length > 0 || filters.maxBudget > 0 || filters.dateFrom || filters.dateTo) && (
+        <div className="mb-4 flex flex-wrap gap-2 items-center">
+          <span className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
+            Search:
+          </span>
+          {filters.cities.map((city) => (
+            <div key={city} className="inline-flex items-center bg-gray-100 pl-3 pr-2 py-1 text-black cursor-pointer hover:bg-gray-200" style={{ fontFamily: fontFamily, fontSize: fontSize }}>
+              <span>{city}</span>
+              <span
+                onClick={() => removeCity(city)}
+                className="ml-2 text-gray-500 opacity-40"
+                style={{ fontSize: fontSize }}
+              >
+                ×
               </span>
-              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                <span>{filters.city}</span>
-                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('city')}>
-                  ×
-                </span>
-              </div>
-            </>
-          )}
-          {filters.type && filters.type !== 'All Types' && (
-            <>
-              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                &gt;
+            </div>
+          ))}
+          {filters.types.map((type) => (
+            <div key={type} className="inline-flex items-center bg-gray-100 pl-3 pr-2 py-1 text-black cursor-pointer hover:bg-gray-200" style={{ fontFamily: fontFamily, fontSize: fontSize }}>
+              <span>{type}</span>
+              <span
+                onClick={() => removeType(type)}
+                className="ml-2 text-gray-500 opacity-40"
+                style={{ fontSize: fontSize }}
+              >
+                ×
               </span>
-              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                <span>{filters.type}</span>
-                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('type')}>
-                  ×
-                </span>
-              </div>
-            </>
-          )}
+            </div>
+          ))}
           {filters.maxBudget > 0 && (
-            <>
-              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                &gt;
+            <div className="inline-flex items-center bg-gray-100 pl-3 pr-2 py-1 text-black cursor-pointer hover:bg-gray-200" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
+              <span>under {filters.maxBudget} usd</span>
+              <span
+                onClick={() => removeFilter('budget')}
+                className="ml-2 text-gray-500 opacity-40"
+                style={{ fontSize: fontSize }}
+              >
+                ×
               </span>
-              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                <span>under {filters.maxBudget} usd</span>
-                <span className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1" style={{ fontSize: FONT_SIZES.base, width: '0px' }} onClick={() => removeFilter('budget')}>
-                  ×
-                </span>
-              </div>
-            </>
+            </div>
           )}
           {(filters.dateFrom || filters.dateTo) && (
-            <>
-              <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                &gt;
+            <div className="inline-flex items-center bg-gray-100 pl-3 pr-2 py-1 text-black cursor-pointer hover:bg-gray-200" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
+              <span>
+                {filters.dateFrom && filters.dateTo
+                  ? `${formatDate(filters.dateFrom, false, true)} - ${formatDate(filters.dateTo)}`
+                  : filters.dateFrom
+                  ? `from ${formatDate(filters.dateFrom)}`
+                  : `to ${formatDate(filters.dateTo)}`}
               </span>
-              <div className="group inline-flex items-center text-black transition-all" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                <span>
-                  {filters.dateFrom && filters.dateTo
-                    ? `${formatDate(filters.dateFrom, false, true)} - ${formatDate(filters.dateTo)}`
-                    : filters.dateFrom
-                    ? `from ${formatDate(filters.dateFrom)}`
-                    : `to ${formatDate(filters.dateTo)}`}
-                </span>
-                <span
-                  onClick={() => {
-                    if (filters.dateFrom && filters.dateTo) {
-                      setFilters({ ...filters, dateFrom: '', dateTo: '' })
-                    } else if (filters.dateFrom) {
-                      removeFilter('dateFrom')
-                    } else {
-                      removeFilter('dateTo')
-                    }
-                  }}
-                  className="opacity-0 group-hover:opacity-100 text-red-600 cursor-pointer transition-all overflow-hidden group-hover:w-auto group-hover:ml-1"
-                  style={{ fontSize: FONT_SIZES.base, width: '0px' }}
-                >
-                  ×
-                </span>
-              </div>
-            </>
+              <span
+                onClick={() => {
+                  if (filters.dateFrom && filters.dateTo) {
+                    setFilters({ ...filters, dateFrom: '', dateTo: '' })
+                  } else if (filters.dateFrom) {
+                    removeFilter('dateFrom')
+                  } else {
+                    removeFilter('dateTo')
+                  }
+                }}
+                className="ml-2 text-gray-500 opacity-40"
+                style={{ fontSize: fontSize }}
+              >
+                ×
+              </span>
+            </div>
           )}
-          </>
-        )}
-        {(filters.city !== 'All Cities' || filters.type !== 'All Types' || filters.maxBudget > 0 || filters.dateFrom || filters.dateTo) && (
-          <span
-            onClick={() => setFilters({ city: 'All Cities', type: 'All Types', maxBudget: 0, dateFrom: '', dateTo: '' })}
-            className="text-red-600 cursor-pointer ml-2"
-            style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}
-          >
-            ×
-          </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {listings.length === 0 && !isLoading ? (
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)', marginTop: '-10vh' }}>
-          <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          <p className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
             Seems there is no requests here...
           </p>
         </div>
       ) : (
         <>
-          <div className={viewMode === 'column' ? 'space-y-4' : 'flex flex-wrap gap-4'} style={{ paddingRight: '60px' }}>
+          <div className={viewMode === 'column' ? 'space-y-4' : ''} style={{
+            ...(viewMode === 'row' && {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+              gap: '16px'
+            })
+          }}>
           {listings.map((listing) => {
             const primaryImage = listing.listing_images?.find(img => img.is_primary) || listing.listing_images?.[0]
             return (
@@ -267,7 +270,7 @@ export default function LookingForPage() {
                 key={listing.id}
                 href={`/listings/${listing.id}`}
                 className="block border border-gray-400 p-4"
-                style={viewMode === 'row' ? { aspectRatio: '1/1', display: 'flex', flexDirection: 'column', width: '420px', height: '420px' } : {}}
+                style={viewMode === 'row' ? { aspectRatio: '1/1', display: 'flex', flexDirection: 'column', borderRadius: '8px' } : { borderRadius: '8px' }}
               >
                 {viewMode === 'column' ? (
                   <div className="flex gap-4 items-start">
@@ -285,16 +288,16 @@ export default function LookingForPage() {
                       </div>
                     )}
                     <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         <span className="text-black">{listing.location}</span>
                         {listing.property_type && (
                           <span className="text-gray-500"> {listing.property_type}</span>
                         )}
                       </div>
-                      <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.price / 100).toFixed(0)} usd
                       </div>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.available_from || listing.available_to) ? (
                           <span className="text-black">
                             {listing.available_from && listing.available_to
@@ -309,28 +312,28 @@ export default function LookingForPage() {
                           <span className="text-gray-500">Dates flexible</span>
                         )}
                       </div>
-                      <div className="flex gap-2" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                      <div className="flex gap-2" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
                         {listing.dog_friendly && <span className="text-gray-500">🐕 friendly</span>}
                         {listing.cat_friendly && <span className="text-gray-500">🐱 friendly</span>}
                       </div>
-                      <div className="text-amber-700" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                      <div className="text-amber-700" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
                         Request
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col justify-between">
-                    <div>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                  <div className="h-full flex flex-col">
+                    <div className="flex flex-col gap-1 mb-2" style={{ minHeight: '120px' }}>
+                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         <span className="text-black">{listing.location}</span>
                         {listing.property_type && (
                           <span className="text-gray-500"> {listing.property_type}</span>
                         )}
                       </div>
-                      <div className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.price / 100).toFixed(0)} usd
                       </div>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.available_from || listing.available_to) ? (
                           <span className="text-black">
                             {listing.available_from && listing.available_to
@@ -345,23 +348,25 @@ export default function LookingForPage() {
                           <span className="text-gray-500">Dates flexible</span>
                         )}
                       </div>
-                      <div className="flex gap-2 mt-1" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
-                        {listing.dog_friendly && <span className="text-gray-500">🐕 friendly</span>}
-                        {listing.cat_friendly && <span className="text-gray-500">🐱 friendly</span>}
-                      </div>
-                      <div className="text-amber-700 mt-1" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+                      {(listing.dog_friendly || listing.cat_friendly) && (
+                        <div className="flex gap-2" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
+                          {listing.dog_friendly && <span className="text-gray-500">🐕 friendly</span>}
+                          {listing.cat_friendly && <span className="text-gray-500">🐱 friendly</span>}
+                        </div>
+                      )}
+                      <div className="text-amber-700" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
                         Request
                       </div>
                     </div>
                     {primaryImage && (
-                      <div className="mt-4">
+                      <div className="flex-1 overflow-hidden flex items-start justify-start">
                         <Image
                           src={primaryImage.thumbnail_url || primaryImage.image_url}
                           alt={`Request in ${listing.location}`}
-                          width={352}
-                          height={264}
-                          className="object-cover w-full"
-                          style={{ maxHeight: '264px' }}
+                          width={400}
+                          height={400}
+                          className="w-full h-full"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'left top' }}
                           loading="lazy"
                         />
                       </div>

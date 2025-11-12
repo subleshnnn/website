@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useUser } from '@clerk/nextjs'
 import { FONT_SIZES } from '@/lib/constants'
 import { useFont } from '@/contexts/FontContext'
+import { useResponsiveFontSize } from '@/hooks/useResponsiveFontSize'
 
 function formatDate(dateString: string, includeYear: boolean = true, includeMonth: boolean = true) {
   const date = new Date(dateString)
@@ -77,6 +78,7 @@ async function getFavoriteListings(userId: string) {
 
 export default function FavoritesPage() {
   const { fontFamily } = useFont()
+  const fontSize = useResponsiveFontSize()
   const { user } = useUser()
 
   const { data: listings = [], isLoading, refetch } = useQuery({
@@ -105,7 +107,7 @@ export default function FavoritesPage() {
     return (
       <div className="min-h-screen bg-white">
         <main className="p-4">
-          <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+          <p className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
             Please sign in to view your favorites
           </p>
         </main>
@@ -118,7 +120,7 @@ export default function FavoritesPage() {
       <main className="p-4">
         {listings.length === 0 && !isLoading ? (
           <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)', marginTop: '-10vh' }}>
-            <p className="text-black" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily }}>
+            <p className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily }}>
               No favorites yet...
             </p>
           </div>
@@ -131,6 +133,7 @@ export default function FavoritesPage() {
                   key={listing.id}
                   href={`/listings/${listing.id}`}
                   className="block border border-gray-400 p-4 relative"
+                  style={{ borderRadius: '8px' }}
                 >
                   <div className="flex gap-4 items-start">
                     {primaryImage && (
@@ -147,13 +150,13 @@ export default function FavoritesPage() {
                       </div>
                     )}
                     <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         <span className="text-black">{listing.location}</span>
                         {listing.property_type && (
                           <span className="text-gray-500"> {listing.property_type}</span>
                         )}
                       </div>
-                      <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.available_from || listing.available_to) &&
                           (() => {
                             if (listing.available_from && listing.available_to) {
@@ -178,7 +181,7 @@ export default function FavoritesPage() {
                           })()
                         }
                       </div>
-                      <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                      <div className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
                         {(listing.price / 100).toFixed(0)} usd
                         {(listing.dog_friendly || listing.cat_friendly) && (
                           <span className="ml-2" style={{ display: 'inline-flex', gap: '10px' }}>
@@ -191,7 +194,7 @@ export default function FavoritesPage() {
                     <button
                       onClick={(e) => removeFavorite(listing.id, e)}
                       className="absolute top-4 right-4 cursor-pointer transition-colors hover:scale-110"
-                      style={{ fontSize: FONT_SIZES.base, color: '#ef4444', fontFamily: fontFamily }}
+                      style={{ fontSize: fontSize, color: '#ef4444', fontFamily: fontFamily }}
                     >
                       &lt;3
                     </button>
