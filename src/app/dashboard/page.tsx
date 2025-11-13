@@ -162,10 +162,10 @@ export default function DashboardPage() {
                 return (
                   <div key={listing.id} className="border border-gray-400 p-4 flex flex-col" style={{ borderRadius: '8px', aspectRatio: '1/1' }}>
                     <div className="flex flex-col gap-1 mb-2" style={{ minHeight: '88px' }}>
-                      <div className="flex items-start justify-between" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                        <span className="text-black">{listing.location}</span>
+                      <div className="flex items-start justify-between">
+                        <span className="text-black" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>{listing.location}</span>
                         {listingWithExtras.property_type && (
-                          <span className="text-gray-500 ml-2">{listingWithExtras.property_type}</span>
+                          <span className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>{listingWithExtras.property_type}</span>
                         )}
                       </div>
                       {(listing.available_from || listing.available_to) && (

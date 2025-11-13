@@ -42,7 +42,6 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
   const pathname = usePathname()
 
   // Filter state
-  const [selectedView, setSelectedView] = useState('Sublets')
   const [city, setCity] = useState('')
   const [type, setType] = useState('')
   const [maxBudget, setMaxBudget] = useState(1000)
@@ -54,8 +53,6 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
   const [cityInterval, setCityInterval] = useState<NodeJS.Timeout | null>(null)
   const [typeColor, setTypeColor] = useState('text-gray-400')
   const [typeInterval, setTypeInterval] = useState<NodeJS.Timeout | null>(null)
-  const [viewColor, setViewColor] = useState('text-gray-400')
-  const [viewInterval, setViewInterval] = useState<NodeJS.Timeout | null>(null)
   const [budgetColor, setBudgetColor] = useState('text-gray-400')
   const [budgetInterval, setBudgetInterval] = useState<NodeJS.Timeout | null>(null)
 
@@ -88,14 +85,6 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
     setMounted(true)
   }, [])
 
-  // Update selectedView based on current pathname
-  useEffect(() => {
-    if (pathname === '/looking-for') {
-      setSelectedView('Requests')
-    } else {
-      setSelectedView('Sublets')
-    }
-  }, [pathname])
 
   // Fetch unique cities from database
   useEffect(() => {
@@ -202,24 +191,24 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
 
           {/* Desktop menu with integrated filters - hide at 1100px */}
           <div className="hidden xl:flex items-center justify-center flex-1">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-3">
               {/* City Filter */}
               <div
                 className="relative inline-block"
                 style={{ zIndex: 100 }}
-                onMouseEnter={() => startAnimation(setCityColor, setCityInterval, cityInterval)}
-                onMouseLeave={() => stopAnimation(setCityColor, setCityInterval, cityInterval)}
               >
                 <select
                   value={city}
                   onChange={(e) => handleCityChange(e.target.value)}
-                  className="px-2 py-1 focus:outline-none text-black bg-transparent appearance-none cursor-pointer"
+                  className="px-3 py-2 focus:outline-none bg-white appearance-none cursor-pointer border"
                   style={{
                     fontFamily: FONT_FAMILY,
                     fontSize: FONT_SIZES.base,
-                    border: 'none',
-                    paddingRight: '20px',
-                    position: 'relative'
+                    borderColor: '#8B4513',
+                    color: '#8B4513',
+                    borderRadius: '8px',
+                    paddingRight: '32px',
+                    minWidth: '120px'
                   }}
                 >
                   {cities.map((cityOption) => (
@@ -228,28 +217,30 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
                     </option>
                   ))}
                 </select>
-                <span className={`absolute pointer-events-none ${cityColor}`} style={{ fontFamily: FONT_FAMILY, fontSize: FONT_SIZES.base, right: '-0.5ch', top: 'calc(50% + 2px)', transform: 'translateY(-50%)' }}>
-                  +
-                </span>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8B4513' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
               </div>
 
               {/* Type Filter */}
               <div
                 className="relative inline-block"
                 style={{ zIndex: 100 }}
-                onMouseEnter={() => startAnimation(setTypeColor, setTypeInterval, typeInterval)}
-                onMouseLeave={() => stopAnimation(setTypeColor, setTypeInterval, typeInterval)}
               >
                 <select
                   value={type}
                   onChange={(e) => handleTypeChange(e.target.value)}
-                  className="px-2 py-1 focus:outline-none text-black bg-transparent appearance-none cursor-pointer"
+                  className="px-3 py-2 focus:outline-none bg-white appearance-none cursor-pointer border"
                   style={{
                     fontFamily: FONT_FAMILY,
                     fontSize: FONT_SIZES.base,
-                    border: 'none',
-                    paddingRight: '20px',
-                    position: 'relative'
+                    borderColor: '#8B4513',
+                    color: '#8B4513',
+                    borderRadius: '8px',
+                    paddingRight: '32px',
+                    minWidth: '120px'
                   }}
                 >
                   {types.map((typeOption) => (
@@ -258,63 +249,30 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
                     </option>
                   ))}
                 </select>
-                <span className={`absolute pointer-events-none ${typeColor}`} style={{ fontFamily: FONT_FAMILY, fontSize: FONT_SIZES.base, right: '-0.5ch', top: 'calc(50% + 2px)', transform: 'translateY(-50%)' }}>
-                  +
-                </span>
-              </div>
-
-              {/* Sublets/Requests Dropdown */}
-              <div
-                className="relative inline-block"
-                style={{ zIndex: 100 }}
-                onMouseEnter={() => startAnimation(setViewColor, setViewInterval, viewInterval)}
-                onMouseLeave={() => stopAnimation(setViewColor, setViewInterval, viewInterval)}
-              >
-                <select
-                  value={selectedView}
-                  onChange={(e) => {
-                    const newView = e.target.value
-                    setSelectedView(newView)
-                    if (newView === 'Requests') {
-                      router.push('/looking-for')
-                    } else {
-                      router.push('/')
-                    }
-                  }}
-                  className="px-2 py-1 focus:outline-none text-black bg-transparent appearance-none cursor-pointer"
-                  style={{
-                    fontFamily: FONT_FAMILY,
-                    fontSize: FONT_SIZES.base,
-                    border: 'none',
-                    paddingRight: '20px',
-                    position: 'relative'
-                  }}
-                >
-                  <option value="Sublets">Sublets</option>
-                  <option value="Requests">Requests</option>
-                </select>
-                <span className={`absolute pointer-events-none ${viewColor}`} style={{ fontFamily: FONT_FAMILY, fontSize: FONT_SIZES.base, right: '-0.5ch', top: 'calc(50% + 2px)', transform: 'translateY(-50%)' }}>
-                  +
-                </span>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8B4513' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
               </div>
 
               {/* Budget Filter */}
               <div
                 className="relative inline-block"
                 style={{ zIndex: 100 }}
-                onMouseEnter={() => startAnimation(setBudgetColor, setBudgetInterval, budgetInterval)}
-                onMouseLeave={() => stopAnimation(setBudgetColor, setBudgetInterval, budgetInterval)}
               >
                 <select
                   value={maxBudget}
                   onChange={(e) => handleBudgetChange(parseInt(e.target.value))}
-                  className="px-2 py-1 focus:outline-none text-black bg-transparent appearance-none cursor-pointer"
+                  className="px-3 py-2 focus:outline-none bg-white appearance-none cursor-pointer border"
                   style={{
                     fontFamily: FONT_FAMILY,
                     fontSize: FONT_SIZES.base,
-                    border: 'none',
-                    paddingRight: '20px',
-                    position: 'relative'
+                    borderColor: '#8B4513',
+                    color: '#8B4513',
+                    borderRadius: '8px',
+                    paddingRight: '32px',
+                    minWidth: '120px'
                   }}
                 >
                   {budgetOptions.map((budget) => (
@@ -323,9 +281,11 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
                     </option>
                   ))}
                 </select>
-                <span className={`absolute pointer-events-none ${budgetColor}`} style={{ fontFamily: FONT_FAMILY, fontSize: FONT_SIZES.base, right: '-0.5ch', top: 'calc(50% + 2px)', transform: 'translateY(-50%)' }}>
-                  +
-                </span>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8B4513' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
@@ -436,36 +396,6 @@ function Navigation({ onFiltersChange }: NavigationProps = {}) {
               </span>
             </div>
 
-            {/* Sublets/Requests */}
-            <div className="relative px-4 sm:px-6 lg:px-8 border-b border-black flex items-center" style={{ height: '64px' }}>
-              <select
-                value={selectedView}
-                onChange={(e) => {
-                  const newView = e.target.value
-                  setSelectedView(newView)
-                  if (newView === 'Requests') {
-                    router.push('/looking-for')
-                  } else {
-                    router.push('/')
-                  }
-                  setIsMobileMenuOpen(false)
-                }}
-                className="py-1 focus:outline-none text-black bg-transparent appearance-none cursor-pointer w-full"
-                style={{
-                  fontFamily: FONT_FAMILY,
-                  fontSize: FONT_SIZES.base,
-                  border: 'none',
-                  paddingLeft: 0,
-                  paddingRight: 0
-                }}
-              >
-                <option value="Sublets">Sublets</option>
-                <option value="Requests">Requests</option>
-              </select>
-              <span className="absolute pointer-events-none text-gray-400 right-4 sm:right-6 lg:right-8" style={{ fontFamily: FONT_FAMILY, fontSize: FONT_SIZES.base, top: '50%', transform: 'translateY(-50%)' }}>
-                +
-              </span>
-            </div>
 
             {/* Budget Filter */}
             <div className="relative px-4 sm:px-6 lg:px-8 border-b border-black flex items-center" style={{ height: '64px' }}>

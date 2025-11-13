@@ -12,6 +12,8 @@ interface ImageUploadProps {
   imageCaptions?: string[]
   onImageCaptionsChange?: (captions: string[]) => void
   maxImages?: number
+  fontSize?: string
+  fontFamily?: string
 }
 
 // Function to create both full-size and thumbnail
@@ -86,7 +88,7 @@ const createImageVersions = (file: File): Promise<{ full: File, thumbnail: File 
   })
 }
 
-export default function ImageUpload({ images, onImagesChange, thumbnails = [], onThumbnailsChange, imageCaptions = [], onImageCaptionsChange, maxImages = 10 }: ImageUploadProps) {
+export default function ImageUpload({ images, onImagesChange, thumbnails = [], onThumbnailsChange, imageCaptions = [], onImageCaptionsChange, maxImages = 10, fontSize = '20px', fontFamily = 'Monaco, Consolas, monospace' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
 
 
@@ -413,34 +415,37 @@ export default function ImageUpload({ images, onImagesChange, thumbnails = [], o
                 )}
               </div>
             ))}
-          </div>
 
-          {/* Add More Images Button - Centered Below Grid */}
-          {images.length < maxImages && (
-            <div className="text-center mt-8">
-              <button
-                type="button"
-                onClick={() => document.getElementById('image-upload')?.click()}
-                className="text-black relative inline-block"
-                style={{ fontSize: '24px', fontFamily: 'Cerial, sans-serif' }}
-                title="Add more images"
-              >
-                Add More (+)
-              </button>
-            </div>
-          )}
+            {/* Add More Button - In Grid */}
+            {images.length < maxImages && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  className="aspect-square w-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  title="Add more images"
+                >
+                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="30" cy="30" r="28" />
+                    <line x1="30" y1="15" x2="30" y2="45" />
+                    <line x1="15" y1="30" x2="45" y2="30" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
 
       {images.length === 0 && (
         <div
-          className="border border-black p-8 text-center hover:bg-gray-100 transition-colors cursor-pointer"
+          className="border border-gray-400 p-8 text-center hover:bg-gray-100 transition-colors cursor-pointer"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter}
           onClick={() => document.getElementById('image-upload')?.click()}
         >
-          <p className="text-gray-400" style={{ fontSize: '24px', fontFamily: 'Monaco, monospace' }}>Drop images here</p>
+          <p className="text-gray-400" style={{ fontSize: fontSize, fontFamily: fontFamily }}>Add Images (+)</p>
         </div>
       )}
     </div>

@@ -9,8 +9,18 @@ import { FONT_SIZES } from '@/lib/constants'
 import { useFilters } from '@/contexts/FilterContext'
 import { useFont } from '@/contexts/FontContext'
 
+const cityColors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B195', '#C06C84',
+  '#6C5B7B', '#355C7D', '#99B898', '#FECEAB', '#E84A5F'
+]
+
+function getCityColor(city: string, index: number): string {
+  return cityColors[index % cityColors.length]
+}
+
 export default function LeftNavigation() {
-  const { setFilters } = useFilters()
+  const { filters, setFilters } = useFilters()
   const { fontFamily } = useFont()
   const { isSignedIn, isLoaded } = useUser()
   const { signOut } = useClerk()
@@ -20,15 +30,16 @@ export default function LeftNavigation() {
   const [profileExpanded, setProfileExpanded] = useState(false)
 
   // Filter state
-  const [selectedView, setSelectedView] = useState('All Posts')
-  const [city, setCity] = useState('All Cities')
-  const [type, setType] = useState('All Types')
   const [maxBudget, setMaxBudget] = useState(0)
-  const [cities, setCities] = useState<string[]>(['All Cities'])
+  const [cities, setCities] = useState<string[]>([])
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
   const datePickerRef = useRef<HTMLDivElement>(null)
+  const [showCityDropdown, setShowCityDropdown] = useState(false)
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const cityDropdownRef = useRef<HTMLDivElement>(null)
+  const typeDropdownRef = useRef<HTMLDivElement>(null)
 
   // Animated colors state for filters
   const colors = ['#60a5fa', '#4ade80', '#f87171', '#c084fc', '#facc15', '#f472b6', '#818cf8', '#fb923c', '#2dd4bf']
@@ -36,8 +47,6 @@ export default function LeftNavigation() {
   const [cityInterval, setCityInterval] = useState<NodeJS.Timeout | null>(null)
   const [typeColor, setTypeColor] = useState('#000000')
   const [typeInterval, setTypeInterval] = useState<NodeJS.Timeout | null>(null)
-  const [viewColor, setViewColor] = useState('#000000')
-  const [viewInterval, setViewInterval] = useState<NodeJS.Timeout | null>(null)
   const [budgetColor, setBudgetColor] = useState('#000000')
   const [budgetInterval, setBudgetInterval] = useState<NodeJS.Timeout | null>(null)
 
@@ -76,31 +85,26 @@ export default function LeftNavigation() {
     setMounted(true)
   }, [])
 
-  // Close date picker when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
         setShowDatePicker(false)
       }
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setShowCityDropdown(false)
+      }
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
+        setShowTypeDropdown(false)
+      }
     }
 
-    if (showDatePicker) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showDatePicker])
+  }, [])
 
-  // Update selectedView based on current pathname
-  useEffect(() => {
-    if (pathname === '/looking-for') {
-      setSelectedView('Requests')
-    } else {
-      setSelectedView('All Posts')
-    }
-  }, [pathname])
 
   // Fetch unique cities from database
   useEffect(() => {
@@ -130,7 +134,7 @@ export default function LeftNavigation() {
           .filter(Boolean)
           .sort()
 
-        setCities(['All Cities', ...uniqueCities])
+        setCities(uniqueCities as string[])
       } catch (error) {
         console.error('Error fetching cities:', error)
       }
@@ -160,22 +164,30 @@ export default function LeftNavigation() {
     { value: 1000, label: '1000 usd' }
   ]
 
-  const handleCityChange = (newCity: string) => {
-    setCity(newCity)
+  const toggleCity = (city: string) => {
+    const currentCities = filters.cities || []
+    const newCities = currentCities.includes(city)
+      ? currentCities.filter(c => c !== city)
+      : [...currentCities, city]
+
     setFilters({
-      city: newCity,
-      type: type,
+      cities: newCities,
+      types: filters.types || [],
       maxBudget,
       dateFrom,
       dateTo
     })
   }
 
-  const handleTypeChange = (newType: string) => {
-    setType(newType)
+  const toggleType = (type: string) => {
+    const currentTypes = filters.types || []
+    const newTypes = currentTypes.includes(type)
+      ? currentTypes.filter(t => t !== type)
+      : [...currentTypes, type]
+
     setFilters({
-      city: city,
-      type: newType,
+      cities: filters.cities || [],
+      types: newTypes,
       maxBudget,
       dateFrom,
       dateTo
@@ -185,8 +197,8 @@ export default function LeftNavigation() {
   const handleBudgetChange = (newBudget: number) => {
     setMaxBudget(newBudget)
     setFilters({
-      city: city,
-      type: type,
+      cities: filters.cities || [],
+      types: filters.types || [],
       maxBudget: newBudget,
       dateFrom,
       dateTo
@@ -202,15 +214,12 @@ export default function LeftNavigation() {
           className="text-black"
           style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
           onClick={() => {
-            setCity('All Cities')
-            setType('All Types')
             setMaxBudget(0)
             setDateFrom('')
             setDateTo('')
-            setSelectedView('All Posts')
             setFilters({
-              city: 'All Cities',
-              type: 'All Types',
+              cities: [],
+              types: [],
               maxBudget: 0,
               dateFrom: '',
               dateTo: ''
@@ -225,26 +234,18 @@ export default function LeftNavigation() {
       <div className="flex flex-col gap-0 mb-4">
         {/* City Filter */}
         <div
+          ref={cityDropdownRef}
           className="relative flex justify-between items-center"
           onMouseEnter={() => startFilterAnimation(setCityColor, setCityInterval, cityInterval)}
           onMouseLeave={() => stopFilterAnimation(setCityColor, setCityInterval, cityInterval)}
         >
-          <div className="flex-1 relative">
-            <span className="text-black" style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}>
-              All Cities
-            </span>
-            <select
-              value={city}
-              onChange={(e) => handleCityChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full"
-            >
-              {cities.map((cityOption) => (
-                <option key={cityOption} value={cityOption}>
-                  {cityOption}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            onClick={() => setShowCityDropdown(!showCityDropdown)}
+            className="flex-1 text-left text-black bg-transparent cursor-pointer"
+            style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
+          >
+            All Cities
+          </button>
           <span
             className="pointer-events-none"
             style={{
@@ -255,30 +256,43 @@ export default function LeftNavigation() {
           >
             +
           </span>
+
+          {/* City Dropdown */}
+          {showCityDropdown && (
+            <div className="absolute left-64 top-0 bg-white border border-gray-400 z-50" style={{ width: '300px', maxHeight: '400px', overflowY: 'auto' }}>
+              {cities.map((cityOption, index) => (
+                <label
+                  key={cityOption}
+                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={(filters.cities || []).includes(cityOption)}
+                    onChange={() => toggleCity(cityOption)}
+                    className="mr-2"
+                  />
+                  <span style={{ color: getCityColor(cityOption, index) }}>{cityOption}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Type Filter */}
         <div
+          ref={typeDropdownRef}
           className="relative flex justify-between items-center"
           onMouseEnter={() => startFilterAnimation(setTypeColor, setTypeInterval, typeInterval)}
           onMouseLeave={() => stopFilterAnimation(setTypeColor, setTypeInterval, typeInterval)}
         >
-          <div className="flex-1 relative">
-            <span className="text-black" style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}>
-              All Types
-            </span>
-            <select
-              value={type}
-              onChange={(e) => handleTypeChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full"
-            >
-              {types.map((typeOption) => (
-                <option key={typeOption} value={typeOption}>
-                  {typeOption}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+            className="flex-1 text-left text-black bg-transparent cursor-pointer"
+            style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
+          >
+            All Types
+          </button>
           <span
             className="pointer-events-none"
             style={{
@@ -289,47 +303,29 @@ export default function LeftNavigation() {
           >
             +
           </span>
+
+          {/* Type Dropdown */}
+          {showTypeDropdown && (
+            <div className="absolute left-64 top-0 bg-white border border-gray-400 z-50" style={{ width: '300px' }}>
+              {types.map((typeOption) => (
+                <label
+                  key={typeOption}
+                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={(filters.types || []).includes(typeOption)}
+                    onChange={() => toggleType(typeOption)}
+                    className="mr-2"
+                  />
+                  <span className="text-black">{typeOption}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Sublets/Requests Dropdown */}
-        <div
-          className="relative flex justify-between items-center"
-          onMouseEnter={() => startFilterAnimation(setViewColor, setViewInterval, viewInterval)}
-          onMouseLeave={() => stopFilterAnimation(setViewColor, setViewInterval, viewInterval)}
-        >
-          <div className="flex-1 relative">
-            <span className="text-black" style={{ fontFamily: fontFamily, fontSize: FONT_SIZES.base }}>
-              All Posts
-            </span>
-            <select
-              value={selectedView}
-              onChange={(e) => {
-                const newView = e.target.value
-                setSelectedView(newView)
-                if (newView === 'Requests') {
-                  router.push('/looking-for')
-                } else {
-                  router.push('/')
-                }
-              }}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full"
-            >
-              <option value="All Posts">All Posts</option>
-              <option value="Sublets">Sublets</option>
-              <option value="Requests">Requests</option>
-            </select>
-          </div>
-          <span
-            className="pointer-events-none"
-            style={{
-              fontFamily: fontFamily,
-              fontSize: FONT_SIZES.base,
-              color: viewColor
-            }}
-          >
-            +
-          </span>
-        </div>
 
         {/* Dates Filter */}
         <div ref={datePickerRef} className="relative flex justify-between items-center">
@@ -365,8 +361,8 @@ export default function LeftNavigation() {
                 onChange={(e) => {
                   setDateFrom(e.target.value)
                   setFilters({
-                    city,
-                    type,
+                    cities: filters.cities || [],
+                    types: filters.types || [],
                     maxBudget,
                     dateFrom: e.target.value,
                     dateTo
@@ -386,8 +382,8 @@ export default function LeftNavigation() {
                 onChange={(e) => {
                   setDateTo(e.target.value)
                   setFilters({
-                    city,
-                    type,
+                    cities: filters.cities || [],
+                    types: filters.types || [],
                     maxBudget,
                     dateFrom,
                     dateTo: e.target.value

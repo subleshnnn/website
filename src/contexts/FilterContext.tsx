@@ -4,21 +4,21 @@ import { createContext, useContext, useState, ReactNode } from 'react'
 
 interface FilterContextType {
   filters: {
-    city: string
-    type: string
+    cities: string[]
+    types: string[]
     maxBudget: number
     dateFrom: string
     dateTo: string
   }
-  setFilters: (filters: { city: string; type: string; maxBudget: number; dateFrom: string; dateTo: string }) => void
+  setFilters: (filters: { cities: string[]; types: string[]; maxBudget: number; dateFrom: string; dateTo: string }) => void
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined)
 
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState({
-    city: 'All Cities',
-    type: 'All Types',
+    cities: [] as string[],
+    types: [] as string[],
     maxBudget: 0, // 0 means no budget filter
     dateFrom: '',
     dateTo: ''

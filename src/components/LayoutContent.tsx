@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import LeftNavigation from '@/components/LeftNavigation'
+import MobileNavigation from '@/components/MobileNavigation'
 import { FilterProvider } from '@/contexts/FilterContext'
 import { ViewModeProvider } from '@/contexts/ViewModeContext'
 
@@ -17,10 +17,10 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   return (
     <FilterProvider>
       <ViewModeProvider>
-        <LeftNavigation />
-        <div className="ml-64">
-          {children}
-        </div>
+        {/* Universal Navigation - shows on all screen sizes */}
+        <MobileNavigation />
+
+        {children}
       </ViewModeProvider>
     </FilterProvider>
   )

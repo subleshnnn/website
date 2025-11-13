@@ -12,7 +12,7 @@ interface ViewModeContextType {
 const ViewModeContext = createContext<ViewModeContextType | undefined>(undefined)
 
 export function ViewModeProvider({ children }: { children: ReactNode }) {
-  const [viewMode, setViewMode] = useState<ViewMode>('column')
+  const [viewMode, setViewMode] = useState<ViewMode>('row')
 
   return (
     <ViewModeContext.Provider value={{ viewMode, setViewMode }}>

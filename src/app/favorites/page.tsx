@@ -149,11 +149,13 @@ export default function FavoritesPage() {
                         />
                       </div>
                     )}
-                    <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
-                      <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                        <span className="text-black">{listing.location}</span>
+                    <div className="flex flex-col gap-1 flex-1 relative" style={{ marginTop: '-2px' }}>
+                      <div className="flex items-start justify-between">
+                        <div style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          <span className="text-black">{listing.location}</span>
+                        </div>
                         {listing.property_type && (
-                          <span className="text-gray-500"> {listing.property_type}</span>
+                          <span className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>{listing.property_type}</span>
                         )}
                       </div>
                       <div className="text-gray-500" style={{ fontSize: fontSize, fontFamily: fontFamily, lineHeight: '1.2' }}>

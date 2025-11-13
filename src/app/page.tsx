@@ -97,7 +97,7 @@ interface ListingData {
   }>
 }
 
-function HomePageContent({ filters, viewMode }: { filters: { city: string, type: string, maxBudget: number, dateFrom: string, dateTo: string }, viewMode: 'column' | 'row' }) {
+function HomePageContent({ filters, viewMode }: { filters: { cities: string[], types: string[], maxBudget: number, dateFrom: string, dateTo: string }, viewMode: 'column' | 'row' }) {
   const { fontFamily } = useFont()
   const { setFilters } = useFilters()
   const { setViewMode } = useViewMode()
@@ -149,35 +149,23 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
     fetchCities()
   }, [])
 
-  const removeFilter = (filterType: 'city' | 'type' | 'budget' | 'dateFrom' | 'dateTo') => {
-    if (filterType === 'city') {
-      setFilters({ ...filters, city: 'All Cities' })
-    } else if (filterType === 'type') {
-      setFilters({ ...filters, type: 'All Types' })
-    } else if (filterType === 'budget') {
-      setFilters({ ...filters, maxBudget: 0 })
-    } else if (filterType === 'dateFrom') {
-      setFilters({ ...filters, dateFrom: '' })
-    } else if (filterType === 'dateTo') {
-      setFilters({ ...filters, dateTo: '' })
-    }
-  }
-
   // Filter listings based on current filters
   const listings = allListings.filter((listing) => {
-    // City filter - check if the filter city appears anywhere in the location string (case-insensitive)
-    if (filters.city && filters.city !== '' && filters.city !== 'All Cities') {
+    // City filter - check if any of the selected cities appears in the location string
+    if (filters.cities && filters.cities.length > 0) {
       const locationLower = listing.location.toLowerCase()
-      const filterCityLower = filters.city.toLowerCase()
-
-      // Check if the location contains the filter city as a whole word
-      if (!locationLower.includes(filterCityLower)) return false
+      const matchesCity = filters.cities.some(city =>
+        locationLower.includes(city.toLowerCase())
+      )
+      if (!matchesCity) return false
     }
 
-    // Type filter (skip if property_type field doesn't exist yet)
-    if (filters.type && filters.type !== '' && filters.type !== 'All Types') {
+    // Type filter
+    if (filters.types && filters.types.length > 0) {
       const propertyType = (listing as unknown as {property_type?: string}).property_type
-      if (propertyType && propertyType.toLowerCase() !== filters.type.toLowerCase()) return false
+      if (!propertyType || !filters.types.some(type =>
+        propertyType.toLowerCase() === type.toLowerCase()
+      )) return false
     }
 
     // Budget filter - only apply if maxBudget > 0
@@ -203,10 +191,10 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
 
   return (
     <>
-      {/* Subleshnn button - top left, clickable */}
+      {/* Subleshnn button - only show on mobile/tablet (below xl) */}
       <button
         onClick={() => setWidgetExpanded(!widgetExpanded)}
-        className="fixed z-10"
+        className="fixed xl:hidden"
         style={{
           fontFamily: fontFamily,
           fontSize: FONT_SIZES.base,
@@ -218,21 +206,23 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
           borderBottom: widgetExpanded ? 'none' : '1px solid #8B4513',
           cursor: 'pointer',
           padding: '7px 16px',
-          top: '16px',
+          top: '80px',
           left: '16px',
           height: '48px',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          zIndex: 40
         }}
       >
         Subleshnn 🌸
       </button>
 
-      {/* Expanded filter panel */}
+      {/* Expanded filter panel - only show on mobile/tablet */}
       {widgetExpanded && (
         <div
-          className="fixed z-10"
+          className="fixed xl:hidden"
           style={{
-            top: '64px',
+            top: '128px',
+            zIndex: 40,
             left: '16px',
             background: 'white',
             border: '1px solid #8B4513',
@@ -482,10 +472,10 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
         </div>
       )}
 
-      {/* View Mode Switcher - fixed position, styled like profile button */}
+      {/* View Mode Switcher - position changes based on screen size */}
       <button
         onClick={() => setViewMode(viewMode === 'column' ? 'row' : 'column')}
-        className="fixed z-10"
+        className="fixed top-[80px] xl:top-[16px] right-4 z-40"
         style={{
           fontFamily: fontFamily,
           fontSize: FONT_SIZES.base,
@@ -496,8 +486,6 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
           borderRadius: '8px',
           cursor: 'pointer',
           padding: '7px 16px',
-          top: '16px',
-          right: '16px',
           height: '48px',
           boxSizing: 'border-box'
         }}
@@ -519,8 +507,7 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
         </div>
       ) : (
         <>
-          <div className={viewMode === 'column' ? 'space-y-4' : ''} style={{
-            paddingTop: '80px',
+          <div className={`${viewMode === 'column' ? 'space-y-4' : ''} pt-4 xl:pt-24`} style={{
             ...(viewMode === 'row' && {
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
@@ -551,11 +538,13 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
                         />
                       </div>
                     )}
-                    <div className="flex flex-col gap-1 flex-1" style={{ marginTop: '-2px' }}>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                        <span className="text-black">{listing.location}</span>
+                    <div className="flex flex-col gap-1 flex-1 relative" style={{ marginTop: '-2px' }}>
+                      <div className="flex items-start justify-between">
+                        <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          <span className="text-black">{listing.location}</span>
+                        </div>
                         {listing.property_type && (
-                          <span className="text-gray-500"> {listing.property_type}</span>
+                          <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>{listing.property_type}</span>
                         )}
                       </div>
                       <div className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
@@ -600,10 +589,12 @@ function HomePageContent({ filters, viewMode }: { filters: { city: string, type:
                 ) : (
                   <div className="flex flex-col h-full">
                     <div className="flex flex-col gap-1 mb-2" style={{ minHeight: '88px' }}>
-                      <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
-                        <span className="text-black">{listing.location}</span>
+                      <div className="flex items-start justify-between">
+                        <div style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>
+                          <span className="text-black">{listing.location}</span>
+                        </div>
                         {listing.property_type && (
-                          <span className="text-gray-500"> {listing.property_type}</span>
+                          <span className="text-gray-500" style={{ fontSize: FONT_SIZES.base, fontFamily: fontFamily, lineHeight: '1.2' }}>{listing.property_type}</span>
                         )}
                       </div>
                       {(listing.available_from || listing.available_to) && (
